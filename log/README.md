@@ -9,7 +9,7 @@
 最简单的方式是使用默认配置初始化全局日志器：
 
 ```go
-import "github.com/your-org/gwkit-go/log"
+import "github.com/gw-gong/gwkit-go/log"
 
 func main() {
     // 使用默认配置初始化全局日志器
@@ -66,7 +66,7 @@ if err != nil {
 ```go
 import (
     "context"
-    "github.com/your-org/gwkit-go/log"
+    "github.com/gw-gong/gwkit-go/log"
     "go.uber.org/zap"
 )
 
@@ -163,7 +163,6 @@ func subProcess(ctx context.Context) {
 如果同时启用了文件输出和控制台输出，日志会被写入到指定的文件中，同时也会输出到控制台。
 
 如果配置中未启用任何输出（文件输出和控制台输出都禁用），初始化时将返回错误。
-
 
 ## 后续优化计划
 

@@ -15,7 +15,7 @@ func GlobalLogger() *zap.Logger {
 	return zap.L()
 }
 
-func InitGlobalLogger(loggerConfig LoggerConfig) error {
+func InitGlobalLogger(loggerConfig *LoggerConfig) error {
 	logger, err := newLogger(loggerConfig)
 	if err != nil {
 		return err
@@ -25,7 +25,9 @@ func InitGlobalLogger(loggerConfig LoggerConfig) error {
 	return nil
 }
 
-func newLogger(loggerConfig LoggerConfig) (*zap.Logger, error) {
+func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, error) {
+	loggerConfig = MergeCfgIntoDefault(loggerConfig)
+
 	zapCfg := zap.NewProductionConfig()
 
 	zapCfg.Level.SetLevel(MapLoggerLevel(loggerConfig.Level))

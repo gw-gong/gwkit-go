@@ -34,6 +34,10 @@ type LoggerConfig struct {
 	StackTrace      StackTraceConfig      `yaml:"stack_trace" json:"stack_trace"`             // Stack trace configuration
 }
 
+func IsSupportedEncodingType(encoding string) bool {
+	return encoding == OutputEncodingJSON || encoding == OutputEncodingConsole
+}
+
 func NewDefaultLoggerConfig() *LoggerConfig {
 	return &LoggerConfig{
 		Level: LoggerLevelDebug,
@@ -57,6 +61,61 @@ func NewDefaultLoggerConfig() *LoggerConfig {
 	}
 }
 
-func IsSupportedEncodingType(encoding string) bool {
-	return encoding == OutputEncodingJSON || encoding == OutputEncodingConsole
+func MergeCfgIntoDefault(config *LoggerConfig) *LoggerConfig {
+    if config == nil {
+        return NewDefaultLoggerConfig()
+    }
+
+    // Create a new config object based on default config
+    mergedConfig := NewDefaultLoggerConfig()
+
+    // Merge log level
+    if config.Level != "" {
+        mergedConfig.Level = config.Level
+    }
+
+    // Merge file output config
+    if config.OutputToFile.Enable {
+        mergedConfig.OutputToFile = config.OutputToFile
+    } else {
+        // Merge other file config items even if not enabled
+        if config.OutputToFile.FilePath != "" {
+            mergedConfig.OutputToFile.FilePath = config.OutputToFile.FilePath
+        }
+        if config.OutputToFile.MaxSize > 0 {
+            mergedConfig.OutputToFile.MaxSize = config.OutputToFile.MaxSize
+        }
+        if config.OutputToFile.MaxBackups > 0 {
+            mergedConfig.OutputToFile.MaxBackups = config.OutputToFile.MaxBackups
+        }
+        if config.OutputToFile.MaxAge > 0 {
+            mergedConfig.OutputToFile.MaxAge = config.OutputToFile.MaxAge
+        }
+        mergedConfig.OutputToFile.Compress = config.OutputToFile.Compress
+    }
+
+    // Merge console output config
+    if config.OutputToConsole.Enable {
+        mergedConfig.OutputToConsole = config.OutputToConsole
+    } else {
+        // Merge encoding settings even if not enabled
+        if config.OutputToConsole.Encoding != "" {
+            mergedConfig.OutputToConsole.Encoding = config.OutputToConsole.Encoding
+        }
+    }
+
+    // Merge caller info config
+    mergedConfig.AddCaller = config.AddCaller
+
+    // Merge stack trace config
+    if config.StackTrace.Enable {
+        mergedConfig.StackTrace = config.StackTrace
+    } else {
+        // Merge level settings even if not enabled
+        if config.StackTrace.TraceLevel != "" {
+            mergedConfig.StackTrace.TraceLevel = config.StackTrace.TraceLevel
+        }
+    }
+
+    return mergedConfig
 }

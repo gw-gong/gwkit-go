@@ -16,5 +16,5 @@ func GetLoggerFromCtx(ctx context.Context) *zap.Logger {
     if logger, ok := ctx.Value(ctxKeyLogger{}).(*zap.Logger); ok {
         return logger
     }
-    return zap.L()
+    return GlobalLogger()
 }

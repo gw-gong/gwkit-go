@@ -1,4 +1,4 @@
-module github.com/gw-gong/gwkit-go/log
+module github.com/gw-gong/gwkit-go
 
 go 1.24.0
 

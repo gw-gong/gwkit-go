@@ -1,4 +1,4 @@
-package gin_mw
+package middlewares
 
 import (
 	common_utils "github.com/gw-gong/gwkit-go/utils/common"

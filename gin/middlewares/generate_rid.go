@@ -9,14 +9,18 @@ import (
 )
 
 const (
-	LogInfoKeyRID = "rid"
+	ContextKeyRID = "rid" // request id
 )
 
 func GenerateRID(c *gin.Context) {
 	requestId := str_utils.GenerateUUIDName()
+
 	logger := log.GetLoggerFromCtx(c.Request.Context())
-	newLogger := logger.With(zap.String(LogInfoKeyRID, requestId))
+	newLogger := logger.With(zap.String(ContextKeyRID, requestId))
 	reqCtx := log.SetLoggerToCtx(c.Request.Context(), newLogger)
 	c.Request = c.Request.WithContext(reqCtx)
+
+	c.Set(ContextKeyRID, requestId)
+
 	c.Next()
 }

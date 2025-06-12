@@ -6,7 +6,7 @@
 
 ### HTTP相关
 
-- [HTTP响应](http/response/error_code.go) - 统一的HTTP错误码定义和处理
+- [HTTP响应](http/response/README.md) - 统一的HTTP错误码定义和处理
 
 ### Gin框架扩展
 
@@ -141,7 +141,7 @@ func main() {
 
 | 组件 | 描述 | 文档 |
 |------|------|------|
-| `http/response` | HTTP响应处理 | [文档](http/response/error_code.go) |
+| `http/response` | HTTP响应处理 | [文档](http/response/README.md) |
 | `gin/response` | Gin响应格式化 | [文档](gin/response/README.md) |
 | `gin/middlewares` | Gin中间件集合 | [文档](gin/middlewares/README.md) |
 | `log` | 日志处理组件 | [文档](log/README.md) |

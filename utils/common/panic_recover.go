@@ -4,8 +4,6 @@ import (
 	"runtime/debug"
 
 	"github.com/gw-gong/gwkit-go/log"
-
-	"go.uber.org/zap"
 )
 
 type panicHandler func(err interface{})
@@ -40,5 +38,5 @@ func WithRecover(f func(), opts ...optionPanicHandler) {
 }
 
 func defaultPanicHandler(err interface{}) {
-	log.GlobalLogger().Error("panic", zap.Any("err", err), zap.String("stack", string(debug.Stack())))
+	log.Error("panic", log.Any("err", err), log.String("stack", string(debug.Stack())))
 }

@@ -5,7 +5,6 @@ import (
 	str_utils "github.com/gw-gong/gwkit-go/utils/str"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 const (
@@ -15,9 +14,7 @@ const (
 func GenerateRID(c *gin.Context) {
 	requestId := str_utils.GenerateUUIDName()
 
-	logger := log.GetLoggerFromCtx(c.Request.Context())
-	newLogger := logger.With(zap.String(ContextKeyRID, requestId))
-	reqCtx := log.SetLoggerToCtx(c.Request.Context(), newLogger)
+	reqCtx := log.WithFields(c.Request.Context(), log.String(ContextKeyRID, requestId))
 	c.Request = c.Request.WithContext(reqCtx)
 
 	c.Set(ContextKeyRID, requestId)

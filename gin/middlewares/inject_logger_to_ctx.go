@@ -8,7 +8,7 @@ import (
 
 func InjectLoggerToCtx(c *gin.Context) {
 	reqCtx := c.Request.Context()
-	reqCtx = log.SetLoggerToCtx(reqCtx, log.GlobalLogger())
+	reqCtx = log.SetGlobalLoggerToCtx(reqCtx)
 	c.Request = c.Request.WithContext(reqCtx)
 	c.Next()
 }

@@ -11,14 +11,10 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func GlobalLogger() *zap.Logger {
-	return zap.L()
-}
-
 func InitGlobalLogger(loggerConfig *LoggerConfig) (func(), error) {
 	logger, syncGlobalLogger, err := newLogger(loggerConfig)
 	if err != nil {
-		return nil, err
+		return syncGlobalLogger, err
 	}
 
 	zap.ReplaceGlobals(logger)
@@ -40,7 +36,9 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 	encoder := zapcore.NewJSONEncoder(encoderConfig)
 
 	// Sync global logger
-	var syncGlobalLogger = func() {}
+	var syncGlobalLogger = func() {
+		_ = zap.L().Sync()
+	}
 
 	// Create WriteSyncer
 	var writeSyncer zapcore.WriteSyncer
@@ -48,7 +46,7 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 		// Ensure directory exists
 		dir := filepath.Dir(loggerConfig.OutputToFile.FilePath)
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return nil, nil, fmt.Errorf("failed to create log directory: %w", err)
+			return nil, syncGlobalLogger, fmt.Errorf("failed to create log directory: %w", err)
 		}
 
 		// Use lumberjack to split logs
@@ -62,7 +60,7 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 		writeSyncer = zapcore.AddSync(lumber)
 
 		syncGlobalLogger = func() {
-			if err := GlobalLogger().Sync(); err != nil {
+			if err := zap.L().Sync(); err != nil {
 				if f, err := os.OpenFile(loggerConfig.OutputToFile.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
 					defer f.Close()
 					fmt.Fprintf(f, "Failed to sync global logger: %v\n", err)
@@ -76,12 +74,12 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 		}
 
 		syncGlobalLogger = func() {
-			if err := GlobalLogger().Sync(); err != nil {
+			if err := zap.L().Sync(); err != nil {
 				fmt.Println("Failed to sync global logger:", err)
 			}
 		}
 	} else {
-		return nil, nil, errors.New("no valid output configured: either output_to_file or output_to_console must be enabled with valid settings")
+		return nil, syncGlobalLogger, errors.New("no valid output configured: either output_to_file or output_to_console must be enabled with valid settings")
 	}
 
 	// Create core

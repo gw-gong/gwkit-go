@@ -14,10 +14,11 @@ import "github.com/gw-gong/gwkit-go/log"
 func main() {
     // 使用默认配置初始化全局日志器
     config := log.NewDefaultLoggerConfig()
-    err := log.InitGlobalLogger(*config)
+    syncFn, err := log.InitGlobalLogger(*config)
     if err != nil {
         panic(err)
     }
+    defer syncFn()
 
     // 使用全局日志器
     logger := log.GlobalLogger()
@@ -51,10 +52,11 @@ config := &log.LoggerConfig{
     },
 }
 
-err := log.InitGlobalLogger(*config)
+syncFn, err := log.InitGlobalLogger(*config)
 if err != nil {
     panic(err)
 }
+defer syncFn()
 ```
 
 ## 与Context结合使用

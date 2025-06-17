@@ -22,7 +22,7 @@ func InitGlobalLogger(loggerConfig *LoggerConfig) (func(), error) {
 }
 
 func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
-	loggerConfig = MergeCfgIntoDefault(loggerConfig)
+	loggerConfig = mergeCfgIntoDefault(loggerConfig)
 
 	zapCfg := zap.NewProductionConfig()
 
@@ -70,6 +70,7 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 	} else if loggerConfig.OutputToConsole.Enable && IsSupportedEncodingType(loggerConfig.OutputToConsole.Encoding) {
 		writeSyncer = zapcore.AddSync(os.Stdout)
 		if loggerConfig.OutputToConsole.Encoding == OutputEncodingConsole {
+			encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 			encoder = zapcore.NewConsoleEncoder(encoderConfig)
 		}
 

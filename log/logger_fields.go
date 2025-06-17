@@ -12,9 +12,6 @@ type field = zap.Field
 type ObjectMarshaler = zapcore.ObjectMarshaler
 
 func Err(err error) field {
-	if err == nil {
-		return Skip()
-	}
 	return zap.Error(err)
 }
 

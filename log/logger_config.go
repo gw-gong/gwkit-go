@@ -61,7 +61,7 @@ func NewDefaultLoggerConfig() *LoggerConfig {
 	}
 }
 
-func MergeCfgIntoDefault(config *LoggerConfig) *LoggerConfig {
+func mergeCfgIntoDefault(config *LoggerConfig) *LoggerConfig {
     if config == nil {
         return NewDefaultLoggerConfig()
     }

@@ -45,7 +45,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gw-gong/gwkit-go/gin/middlewares"
 	"github.com/gw-gong/gwkit-go/gin/response"
-	"github.com/gw-gong/gwkit-go/http/response"
+	gwkit_res "github.com/gw-gong/gwkit-go/http/response"
 )
 
 func main() {
@@ -87,16 +87,22 @@ import (
 func main() {
 	// 初始化日志配置
 	config := log.NewDefaultLoggerConfig()
-	log.InitGlobalLogger(config)
+	syncFn, err := log.InitGlobalLogger(config)
+	if err != nil {
+		panic(err)
+	}
+	defer syncFn()
 	
 	// 使用全局日志
 	log.Info("应用启动")
 	
 	// 带上下文的日志
 	ctx := context.Background()
-	ctx = log.SetLoggerToCtx(ctx, log.GlobalLogger().With("requestID", "123456"))
-	logger := log.GetLoggerFromCtx(ctx)
-	logger.Info("处理请求")
+	ctx = log.SetGlobalLoggerToCtx(ctx)
+	ctx = log.WithFields(ctx, 
+		log.String("request_id", "123456"),
+	)
+	log.Infoc(ctx, "处理请求")
 }
 ```
 
@@ -121,13 +127,17 @@ func main() {
 	global_settings.SetEnv(env)
 	
 	// 根据环境初始化日志
-	var logConfig log.Config
+	config := log.NewDefaultLoggerConfig()
 	if global_settings.GetEnv() == global_settings.ENV_DEV {
-		logConfig = log.NewDevelopmentConfig()
+		config.OutputToConsole.Encoding = log.OutputEncodingConsole
 	} else {
-		logConfig = log.NewProductionConfig()
+		config.OutputToConsole.Encoding = log.OutputEncodingJSON
 	}
-	log.InitGlobalLogger(logConfig)
+	syncFn, err := log.InitGlobalLogger(config)
+	if err != nil {
+		panic(err)
+	}
+	defer syncFn()
 	
 	// 初始化服务上下文
 	ctx := context.Background()

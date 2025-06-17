@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"github.com/gw-gong/gwkit-go/log"
-	str_utils "github.com/gw-gong/gwkit-go/utils/str"
+	gwkit_str "github.com/gw-gong/gwkit-go/utils/str"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,7 +12,7 @@ const (
 )
 
 func GenerateRID(c *gin.Context) {
-	requestId := str_utils.GenerateUUIDName()
+	requestId := gwkit_str.GenerateUUIDName()
 
 	reqCtx := log.WithFields(c.Request.Context(), log.String(ContextKeyRID, requestId))
 	c.Request = c.Request.WithContext(reqCtx)

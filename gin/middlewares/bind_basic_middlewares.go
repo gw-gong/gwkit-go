@@ -2,9 +2,9 @@ package middlewares
 
 import "github.com/gin-gonic/gin"
 
-func BindBasicMiddlewares(app *gin.Engine) {
+func BindBasicMiddlewares(app *gin.Engine, logRequestBody bool) {
 	app.Use(PanicRecover)
 	app.Use(InjectLoggerToCtx)
 	app.Use(GenerateRID)
-	app.Use(LogHttpReqInfo(true))
+	app.Use(LogHttpReqInfo(logRequestBody))
 }

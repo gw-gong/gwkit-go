@@ -11,7 +11,7 @@ import (
 )
 
 func PanicHandlerWithCtx(ctx context.Context, err interface{}) {
-	log.Errorc(ctx, "panic", log.Any("err", err), log.String("stack", string(debug.Stack())))
+	log.Errorc(ctx, "panic", log.Any("err", err), log.Str("stack", string(debug.Stack())))
 }
 
 func PanicRecover(c *gin.Context) {

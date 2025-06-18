@@ -2,6 +2,6 @@ package str
 
 import "github.com/google/uuid"
 
-func GenerateUUIDName() string {
+func GenerateUUID() string {
 	return uuid.New().String()
 }

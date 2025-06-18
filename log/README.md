@@ -75,15 +75,15 @@ log.Error("错误信息")
 ```go
 // 添加字段
 log.Info("用户登录",
-    log.String("user_id", "123"),
-    log.String("ip", "192.168.1.1"),
+    log.Str("user_id", "123"),
+    log.Str("ip", "192.168.1.1"),
     log.Int("attempt", 1),
 )
 
 // 错误日志
 if err != nil {
     log.Error("操作失败",
-        log.String("operation", "create_user"),
+        log.Str("operation", "create_user"),
         log.Error(err),
     )
 }
@@ -99,8 +99,8 @@ ctx := log.SetGlobalLoggerToCtx(context.Background())
 
 // 添加字段
 ctx = log.WithFields(ctx, 
-    log.String("request_id", "req-123"),
-    log.String("user_id", "user-456"),
+    log.Str("request_id", "req-123"),
+    log.Str("user_id", "user-456"),
 )
 
 // 使用带上下文的日志方法

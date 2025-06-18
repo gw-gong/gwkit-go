@@ -25,22 +25,22 @@ func LogHttpReqInfo(logRequestBody bool) gin.HandlerFunc {
 		// Log request information
 		log.Infoc(c.Request.Context(), "http request started",
 			// Basic request information
-			log.String("method", c.Request.Method),      // HTTP method (GET/POST/PUT/DELETE etc.)
-			log.String("path", c.Request.URL.Path),      // Request path (e.g. /api/users)
-			log.String("query", c.Request.URL.RawQuery), // URL query parameters (e.g. id=123&name=test)
+			log.Str("method", c.Request.Method),      // HTTP method (GET/POST/PUT/DELETE etc.)
+			log.Str("path", c.Request.URL.Path),      // Request path (e.g. /api/users)
+			log.Str("query", c.Request.URL.RawQuery), // URL query parameters (e.g. id=123&name=test)
 
 			// Client information
-			log.String("ip", c.ClientIP()),                  // Client IP address
-			log.String("user_agent", c.Request.UserAgent()), // Client browser/device information
-			log.String("referer", c.Request.Referer()),      // Request source page URL
+			log.Str("ip", c.ClientIP()),                  // Client IP address
+			log.Str("user_agent", c.Request.UserAgent()), // Client browser/device information
+			log.Str("referer", c.Request.Referer()),      // Request source page URL
 
 			// Request header information
-			log.String("content_type", c.ContentType()),                   // Request body format (e.g. application/json)
-			log.String("accept", c.GetHeader("Accept")),                   // Client expected response format
-			log.String("x_forwarded_for", c.GetHeader("X-Forwarded-For")), // Original client IP forwarded by proxy server
+			log.Str("content_type", c.ContentType()),                   // Request body format (e.g. application/json)
+			log.Str("accept", c.GetHeader("Accept")),                   // Client expected response format
+			log.Str("x_forwarded_for", c.GetHeader("X-Forwarded-For")), // Original client IP forwarded by proxy server
 
 			// Request body content (limited to 1KB to avoid large files)
-			log.String("body", bodyStr),
+			log.Str("body", bodyStr),
 
 			// Service information (for distinguishing between multiple instances)
 			// zap.String("app_version", "v1.0.0"),              // Application version number

@@ -10,21 +10,25 @@
 {
     "code": 0,        // 业务状态码，0表示成功，非0表示失败
     "msg": "success", // 状态描述信息
-    "request_id": "550e8400-e29b-41d4-a716-446655440000", // 请求唯一标识
     "data": {},       // 业务数据，成功时返回，可以是任意JSON结构
     "err_details": {} // 错误详情，仅在错误时返回，可选字段
 }
 ```
 
-## 成功响应
+## 请求追踪
 
-成功响应的`code`固定为0，`data`字段包含返回的业务数据：
+为了便于问题追踪，系统会自动为每个请求生成唯一的请求ID（Request ID），并通过HTTP响应头 `X-Request-ID` 返回给客户端。
 
-```json
+### 成功响应示例
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
+
 {
     "code": 0,
     "msg": "success",
-    "request_id": "550e8400-e29b-41d4-a716-446655440000",
     "data": {
         "user_id": 12345,
         "username": "example"
@@ -32,15 +36,16 @@
 }
 ```
 
-## 错误响应
+### 错误响应示例
 
-错误响应的`code`为非0值，表示特定的错误类型：
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
 
-```json
 {
-    "code": 10001,
+    "code": 100000001,
     "msg": "invalid json format",
-    "request_id": "550e8400-e29b-41d4-a716-446655440000",
     "data": null,
     "err_details": {
         "field": "username",
@@ -100,7 +105,7 @@ func CreateUser(c *gin.Context) {
 ## 错误码设计
 
 错误码按HTTP状态码分类：
-- 客户端错误（4xx）：10000-19999
-- 服务端错误（5xx）：20000-29999
+- 客户端错误（4xx）：100000000-100000099
+- 服务端错误（5xx）：100000100-100000199
 
 具体错误码定义见 `http/response/error_code.go`

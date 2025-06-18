@@ -100,7 +100,7 @@ func main() {
 	ctx := context.Background()
 	ctx = log.SetGlobalLoggerToCtx(ctx)
 	ctx = log.WithFields(ctx, 
-		log.String("request_id", "123456"),
+		log.Str("request_id", "123456"),
 	)
 	log.Infoc(ctx, "处理请求")
 }

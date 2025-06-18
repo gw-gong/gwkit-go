@@ -107,11 +107,11 @@ func Int8p(key string, val *int8) field {
 	return zap.Int8p(key, val)
 }
 
-func String(key string, val string) field {
+func Str(key string, val string) field {
 	return zap.String(key, val)
 }
 
-func Stringp(key string, val *string) field {
+func Strp(key string, val *string) field {
 	return zap.Stringp(key, val)
 }
 

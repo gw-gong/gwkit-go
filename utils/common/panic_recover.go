@@ -38,5 +38,5 @@ func WithRecover(f func(), opts ...optionPanicHandler) {
 }
 
 func defaultPanicHandler(err interface{}) {
-	log.Error("panic", log.Any("err", err), log.String("stack", string(debug.Stack())))
+	log.Error("panic", log.Any("err", err), log.Str("stack", string(debug.Stack())))
 }

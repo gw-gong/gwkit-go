@@ -3,6 +3,7 @@ package response
 import (
 	"github.com/gw-gong/gwkit-go/gin/middlewares"
 	gwkit_res "github.com/gw-gong/gwkit-go/http/response"
+	"github.com/gw-gong/gwkit-go/log"
 	gwkit_str "github.com/gw-gong/gwkit-go/utils/str"
 
 	"github.com/gin-gonic/gin"
@@ -11,17 +12,16 @@ import (
 type ClientResponse struct {
 	Code       int         `json:"code"`
 	Msg        string      `json:"msg"`
-	RequestID  string      `json:"request_id"`
 	Data       interface{} `json:"data"`
 	ErrDetails interface{} `json:"err_details,omitempty"`
 }
 
 func responseJson(c *gin.Context, err *gwkit_res.ErrorCode, data interface{}, errDetails interface{}) {
 	requestID := getRequestID(c)
+	c.Writer.Header().Set(middlewares.HttpHeaderRID, requestID)
 	c.JSON(err.HttpStatus, ClientResponse{
 		Code:       err.Code,
 		Msg:        err.Msg,
-		RequestID:  requestID,
 		Data:       data,
 		ErrDetails: errDetails,
 	})
@@ -29,12 +29,14 @@ func responseJson(c *gin.Context, err *gwkit_res.ErrorCode, data interface{}, er
 
 // getRequestID retrieves request ID from context or generates a new one
 func getRequestID(c *gin.Context) string {
-	if requestID, exists := c.Get(middlewares.ContextKeyRID); exists {
+	if requestID, exists := c.Get(middlewares.HttpHeaderRID); exists {
 		if rid, ok := requestID.(string); ok {
 			return rid
 		}
 	}
-	return gwkit_str.GenerateUUIDName()
+	newRequestID := gwkit_str.GenerateULID()
+	log.Warnc(c.Request.Context(), "request id not found, generate a new one", log.Str(middlewares.LoggerKeyRID, newRequestID))
+	return newRequestID
 }
 
 // ResponseSuccess sends a success response with data

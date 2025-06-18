@@ -8,16 +8,22 @@ import (
 )
 
 const (
-	ContextKeyRID = "rid" // request id
+	LoggerKeyRID  = "rid"
+	HttpHeaderRID = "X-Request-ID"
 )
 
 func GenerateRID(c *gin.Context) {
-	requestId := gwkit_str.GenerateUUIDName()
+	var requestID string
+	if val := c.GetHeader(HttpHeaderRID); val != "" {
+		requestID = val
+	} else {
+		requestID = gwkit_str.GenerateULID()
+	}
 
-	reqCtx := log.WithFields(c.Request.Context(), log.String(ContextKeyRID, requestId))
+	reqCtx := log.WithFields(c.Request.Context(), log.Str(LoggerKeyRID, requestID))
 	c.Request = c.Request.WithContext(reqCtx)
 
-	c.Set(ContextKeyRID, requestId)
+	c.Set(HttpHeaderRID, requestID)
 
 	c.Next()
 }

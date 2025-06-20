@@ -3,11 +3,11 @@ package main
 import "github.com/gw-gong/gwkit-go/grpc/consul/agent"
 
 const (
-	serviceName = agent.ServiceName("test_service")
-	serviceTag  = "test"
-	serviceDC   = ""
+	ServiceName = agent.ServiceName("test_service")
+	ServiceTag  = "test"
+	ServiceDC   = ""
 
-	serverPort = 8080
+	ServerPort = 8080
 )
 
 func NewTestServiceRegistry(sn agent.ServiceName) (agent.Registry, error) {

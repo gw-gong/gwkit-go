@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	pb "github.com/gw-gong/gwkit-go/examples/case002/internal/protobuf"
+	pb "github.com/gw-gong/gwkit-go/internal/examples/case002/protobuf"
 	consul_agent "github.com/gw-gong/gwkit-go/grpc/consul/agent"
 
 	"google.golang.org/grpc"

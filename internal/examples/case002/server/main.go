@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	pb "github.com/gw-gong/gwkit-go/examples/case002/internal/protobuf"
+	pb "github.com/gw-gong/gwkit-go/internal/examples/case002/protobuf"
 	"github.com/gw-gong/gwkit-go/log"
 	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
 	gwkit_str "github.com/gw-gong/gwkit-go/utils/str"
@@ -19,10 +19,10 @@ func main() {
 	gwkit_common.ExitOnErr(context.Background(), err)
 	defer syncFn()
 
-	serviceRegistry, err := NewTestServiceRegistry(serviceName)
+	serviceRegistry, err := NewTestServiceRegistry(ServiceName)
 	gwkit_common.ExitOnErr(context.Background(), err)
 	serviceID := gwkit_str.GenerateUUID()
-	err = serviceRegistry.Register(serviceID, serverPort, []string{serviceTag})
+	err = serviceRegistry.Register(serviceID, ServerPort, []string{ServiceTag})
 	gwkit_common.ExitOnErr(context.Background(), err)
 	defer func() {
 		err := serviceRegistry.Deregister(serviceID)
@@ -45,11 +45,11 @@ func main() {
 	testService := NewTestService()
 	pb.RegisterTestServiceServer(grpcServer, testService)
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", serverPort))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", ServerPort))
 	gwkit_common.ExitOnErr(context.Background(), err)
 	defer listener.Close()
 
-	log.Info("服务启动成功", log.Str("port", fmt.Sprintf("%d", serverPort)))
+	log.Info("服务启动成功", log.Str("port", fmt.Sprintf("%d", ServerPort)))
 	err = grpcServer.Serve(listener)
 	gwkit_common.ExitOnErr(context.Background(), err)
 }

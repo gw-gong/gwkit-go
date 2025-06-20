@@ -75,9 +75,7 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 		}
 
 		syncGlobalLogger = func() {
-			if err := zap.L().Sync(); err != nil {
-				fmt.Println("Failed to sync global logger:", err)
-			}
+			fmt.Println("Output to console, no sync needed, please ignore, no need to modify your code")
 		}
 	} else {
 		return nil, syncGlobalLogger, errors.New("no valid output configured: either output_to_file or output_to_console must be enabled with valid settings")

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = ".;protobuf";
+
+service TestService {
+  rpc TestFunc(TestRequest) returns (TestResponse) {}
+}
+
+message TestRequest {
+  string request_name = 1;
+}
+
+message TestResponse {
+  string response_msg = 1;
+}

@@ -12,9 +12,7 @@ import (
 
 func main() {
 	syncFn, err := log.InitGlobalLogger(log.NewDefaultLoggerConfig())
-	if err != nil {
-		gwkit_common.ExitOnErr(context.Background(), err)
-	}
+	gwkit_common.ExitOnErr(context.Background(), err)
 	defer syncFn()
 
 	log.Info("应用启动成功")
@@ -30,9 +28,7 @@ func main() {
 	})
 
 	err = app.Run(":8080")
-	if err != nil {
-		gwkit_common.ExitOnErr(context.Background(), err)
-	}
+	gwkit_common.ExitOnErr(context.Background(), err)
 }
 
 func subProcess(ctx context.Context) {

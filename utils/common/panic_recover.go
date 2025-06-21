@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"runtime/debug"
 
 	"github.com/gw-gong/gwkit-go/log"
@@ -38,5 +39,9 @@ func WithRecover(f func(), opts ...optionPanicHandler) {
 }
 
 func defaultPanicHandler(err interface{}) {
+	log.Error("panic", log.Any("err", err), log.Str("stack", string(debug.Stack())))
+}
+
+func DefaultPanicWithCtx(ctx context.Context, err interface{}) {
 	log.Error("panic", log.Any("err", err), log.Str("stack", string(debug.Stack())))
 }

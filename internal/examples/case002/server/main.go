@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/gw-gong/gwkit-go/grpc/interceptors/server/unary"
 	pb "github.com/gw-gong/gwkit-go/internal/examples/case002/protobuf"
 	"github.com/gw-gong/gwkit-go/log"
 	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
@@ -36,7 +37,9 @@ func main() {
 	log.Info("consul 服务注册成功")
 
 	// 创建 gRPC 服务器
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		unary.PanicRecoverInterceptor(),
+	)
 
 	// 创建并注册健康检查服务
 	healthServer := health.NewServer()

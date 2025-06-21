@@ -17,5 +17,6 @@ type testService struct {
 
 func (s *testService) TestFunc(ctx context.Context, request *pb.TestRequest) (*pb.TestResponse, error) {
 	log.Infoc(ctx, "TestFunc", log.Str("request", request.RequestName))
+	panic("test panic")
 	return &pb.TestResponse{ResponseMsg: "test"}, nil
 }

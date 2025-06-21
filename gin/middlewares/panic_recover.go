@@ -16,6 +16,6 @@ func PanicHandlerWithCtx(ctx context.Context, err interface{}) {
 
 func PanicRecover(c *gin.Context) {
 	gwkit_common.WithRecover(c.Next, gwkit_common.WithPanicHandler(func(err interface{}) {
-		PanicHandlerWithCtx(c.Request.Context(), err)
+		gwkit_common.DefaultPanicWithCtx(c.Request.Context(), err)
 	}))
 }

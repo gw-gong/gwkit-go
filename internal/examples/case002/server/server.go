@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	// "errors"
 
 	pb "github.com/gw-gong/gwkit-go/internal/examples/case002/protobuf"
 	"github.com/gw-gong/gwkit-go/log"
@@ -17,6 +18,11 @@ type testService struct {
 
 func (s *testService) TestFunc(ctx context.Context, request *pb.TestRequest) (*pb.TestResponse, error) {
 	log.Infoc(ctx, "TestFunc", log.Str("request", request.RequestName))
+
 	// panic("test panic")
+
+	// log.Errorc(ctx, "test error")
+	// return nil, errors.New("test error")
+
 	return &pb.TestResponse{ResponseMsg: "test"}, nil
 }

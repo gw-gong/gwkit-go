@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func PanicRecoverInterceptor() grpc.ServerOption {
-	unaryServerInterceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, errInterceptor error) {
+func PanicRecoverInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, errInterceptor error) {
 		gwkit_common.WithRecover(func() {
 			resp, errInterceptor = handler(ctx, req)
 		}, gwkit_common.WithPanicHandler(func(err interface{}) {
@@ -21,5 +21,4 @@ func PanicRecoverInterceptor() grpc.ServerOption {
 		}))
 		return
 	}
-	return grpc.UnaryInterceptor(unaryServerInterceptor)
 }

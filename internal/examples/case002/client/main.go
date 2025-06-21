@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 
+	"github.com/gw-gong/gwkit-go/grpc/interceptors/client/unary"
 	"github.com/gw-gong/gwkit-go/log"
 	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
+	gwkit_str "github.com/gw-gong/gwkit-go/utils/str"
+
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -12,10 +16,19 @@ func main() {
 	gwkit_common.ExitOnErr(context.Background(), err)
 	defer syncFn()
 
-	testClient, err := NewTestClient("127.0.0.1:8500", "test_service", "test", "")
-	gwkit_common.ExitOnErr(context.Background(), err)
+	requestID := gwkit_str.GenerateULID()
+	ctx := gwkit_common.SetRequestIDToCtx(context.Background(), requestID)
+	ctx = log.SetGlobalLoggerToCtx(ctx)
+	ctx = log.WithFieldRequestID(ctx, requestID)
 
-	_, _ = testClient.TestFunc(context.Background(), "test")
+	testClient, err := NewTestClient("127.0.0.1:8500", "test_service", "test", "",
+		grpc.WithChainUnaryInterceptor(
+			unary.InjectMetaFromCtx(),
+		),
+	)
+	gwkit_common.ExitOnErr(ctx, err)
+
+	_, _ = testClient.TestFunc(ctx, "test")
 
 	log.Info("rpc 调用完成")
 }

@@ -39,5 +39,6 @@ func (c *testClient) TestFunc(ctx context.Context, requestName string) (response
 		log.Errorc(ctx, "TestFunc", log.Err(err))
 		return "", err
 	}
+	log.Infoc(ctx, "TestFunc", log.Str("response", response.ResponseMsg))
 	return response.ResponseMsg, nil
 }

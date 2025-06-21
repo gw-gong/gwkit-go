@@ -38,7 +38,10 @@ func main() {
 
 	// 创建 gRPC 服务器
 	grpcServer := grpc.NewServer(
-		unary.PanicRecoverInterceptor(),
+		grpc.ChainUnaryInterceptor(
+			unary.PanicRecoverInterceptor(),
+			unary.ParseMetaToCtx(),
+		),
 	)
 
 	// 创建并注册健康检查服务

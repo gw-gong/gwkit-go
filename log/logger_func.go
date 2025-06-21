@@ -22,11 +22,6 @@ func Error(msg string, fields ...field) {
 	zap.L().Error(msg, fields...)
 }
 
-func WithFields(ctx context.Context, fields ...field) context.Context {
-	loggerFromCtx := getLoggerFromCtx(ctx)
-	return setLoggerToCtx(ctx, loggerFromCtx.With(fields...))
-}
-
 func Debugc(ctx context.Context, msg string, fields ...field) {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	loggerFromCtx.Debug(msg, fields...)
@@ -45,4 +40,19 @@ func Warnc(ctx context.Context, msg string, fields ...field) {
 func Errorc(ctx context.Context, msg string, fields ...field) {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	loggerFromCtx.Error(msg, fields...)
+}
+
+func WithFields(ctx context.Context, fields ...field) context.Context {
+	loggerFromCtx := getLoggerFromCtx(ctx)
+	return setLoggerToCtx(ctx, loggerFromCtx.With(fields...))
+}
+
+func WithFieldRequestID(ctx context.Context, requestID string) context.Context {
+	loggerFromCtx := getLoggerFromCtx(ctx)
+	return setLoggerToCtx(ctx, loggerFromCtx.With(Str("rid", requestID)))
+}
+
+func WithFieldTraceID(ctx context.Context, traceID string) context.Context {
+	loggerFromCtx := getLoggerFromCtx(ctx)
+	return setLoggerToCtx(ctx, loggerFromCtx.With(Str("trace_id", traceID)))
 }

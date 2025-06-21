@@ -35,7 +35,7 @@ func getRequestID(c *gin.Context) string {
 		}
 	}
 	newRequestID := gwkit_str.GenerateULID()
-	log.Warnc(c.Request.Context(), "request id not found, generate a new one", log.Str(middlewares.LoggerKeyRID, newRequestID))
+	log.Warnc(c.Request.Context(), "request id not found, generate a new one", log.Str("new_rid", newRequestID))
 	return newRequestID
 }
 

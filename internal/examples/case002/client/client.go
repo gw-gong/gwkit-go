@@ -5,6 +5,7 @@ import (
 
 	"github.com/gw-gong/gwkit-go/grpc/consul_agent"
 	pb "github.com/gw-gong/gwkit-go/internal/examples/case002/protobuf"
+	"github.com/gw-gong/gwkit-go/log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -35,6 +36,7 @@ func (c *testClient) TestFunc(ctx context.Context, requestName string) (response
 	request := &pb.TestRequest{RequestName: requestName}
 	response, err := c.client.TestFunc(ctx, request)
 	if err != nil {
+		log.Errorc(ctx, "TestFunc", log.Err(err))
 		return "", err
 	}
 	return response.ResponseMsg, nil

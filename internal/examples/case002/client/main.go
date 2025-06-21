@@ -15,8 +15,7 @@ func main() {
 	testClient, err := NewTestClient("127.0.0.1:8500", "test_service", "test", "")
 	gwkit_common.ExitOnErr(context.Background(), err)
 
-	response, err := testClient.TestFunc(context.Background(), "test")
-	gwkit_common.ExitOnErr(context.Background(), err)
+	_, _ = testClient.TestFunc(context.Background(), "test")
 
-	log.Info("rpc 调用成功", log.Str("response", response))
+	log.Info("rpc 调用完成")
 }

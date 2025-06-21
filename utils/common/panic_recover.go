@@ -43,5 +43,5 @@ func defaultPanicHandler(err interface{}) {
 }
 
 func DefaultPanicWithCtx(ctx context.Context, err interface{}) {
-	log.Error("panic", log.Any("err", err), log.Str("stack", string(debug.Stack())))
+	log.Errorc(ctx, "panic", log.Any("err", err), log.Str("stack", string(debug.Stack())))
 }

@@ -22,6 +22,11 @@ func InitGlobalLogger(loggerConfig *LoggerConfig) (func(), error) {
 }
 
 func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
+	// Sync global logger
+	var syncGlobalLogger = func() {
+		_ = zap.L().Sync()
+	}
+
 	loggerConfig = mergeCfgIntoDefault(loggerConfig)
 
 	zapCfg := zap.NewProductionConfig()
@@ -34,11 +39,6 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 
 	// Create encoder
 	encoder := zapcore.NewJSONEncoder(encoderConfig)
-
-	// Sync global logger
-	var syncGlobalLogger = func() {
-		_ = zap.L().Sync()
-	}
 
 	// Create WriteSyncer
 	var writeSyncer zapcore.WriteSyncer
@@ -84,13 +84,16 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 	// Create core
 	core := zapcore.NewCore(encoder, writeSyncer, zapCfg.Level)
 
-	// Create Logger instance
-	var logger *zap.Logger
+	// Create Logger options
+	var loggerOptions []zap.Option
 	if loggerConfig.AddCaller {
-		logger = zap.New(core, zap.AddCaller())
-	} else {
-		logger = zap.New(core)
+		loggerOptions = append(loggerOptions, zap.AddCaller())
+		// add caller skip
+		loggerOptions = append(loggerOptions, zap.AddCallerSkip(1)) // 由于所有的log函数已封装一层，所以需要跳过一层
 	}
+
+	// create logger
+	logger := zap.New(core, loggerOptions...)
 
 	// Add stack trace
 	if loggerConfig.StackTrace.Enable {

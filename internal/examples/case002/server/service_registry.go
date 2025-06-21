@@ -1,17 +1,17 @@
 package main
 
-import "github.com/gw-gong/gwkit-go/grpc/consul/agent"
+import "github.com/gw-gong/gwkit-go/grpc/consul_agent"
 
 const (
-	ServiceName = agent.ServiceName("test_service")
+	ServiceName = consul_agent.ServiceName("test_service")
 	ServiceTag  = "test"
 	ServiceDC   = ""
 
 	ServerPort = 8080
 )
 
-func NewTestServiceRegistry(sn agent.ServiceName) (agent.Registry, error) {
-	registry, err := agent.NewRegistry(sn)
+func NewTestServiceRegistry(sn consul_agent.ServiceName) (consul_agent.Registry, error) {
+	registry, err := consul_agent.NewRegistry(sn)
 	if err != nil {
 		return nil, err
 	}

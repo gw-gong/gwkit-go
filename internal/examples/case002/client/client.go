@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/gw-gong/gwkit-go/grpc/consul_agent"
 	pb "github.com/gw-gong/gwkit-go/internal/examples/case002/protobuf"
-	consul_agent "github.com/gw-gong/gwkit-go/grpc/consul/agent"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

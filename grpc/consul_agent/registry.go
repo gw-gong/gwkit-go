@@ -1,4 +1,4 @@
-package agent
+package consul_agent
 
 import (
 	"fmt"

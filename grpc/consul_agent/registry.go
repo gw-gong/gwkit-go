@@ -3,7 +3,7 @@ package consul_agent
 import (
 	"fmt"
 
-	consul "github.com/hashicorp/consul/api"
+	consul_api "github.com/hashicorp/consul/api"
 )
 
 // DefaultConsulAgentAddr is the default address of consul agent,
@@ -23,14 +23,14 @@ type Registry interface {
 }
 
 type registry struct {
-	client *consul.Client
+	client *consul_api.Client
 	name   string
 }
 
 // NewRegistry returns a Registry interface for services
 func NewRegistry(name ServiceName) (*registry, error) {
-	config := consul.DefaultConfig()
-	c, err := consul.NewClient(config)
+	config := consul_api.DefaultConfig()
+	c, err := consul_api.NewClient(config)
 	if err != nil {
 		return nil, err
 	}
@@ -54,37 +54,37 @@ func (r *registry) Service(tags []string) ([]string, error) {
 }
 
 func (r *registry) Register(serviceID string, port int, tags []string) error {
-	reg := &consul.AgentServiceRegistration{
+	reg := &consul_api.AgentServiceRegistration{
 		ID:   serviceID,
 		Name: r.name,
 		Port: port,
 		Tags: tags,
-		Check: &consul.AgentServiceCheck{
+		Check: &consul_api.AgentServiceCheck{
 			GRPC:       fmt.Sprintf("127.0.0.1:%d", port),
 			GRPCUseTLS: false,
 			Interval:   "10s",
 			Timeout:    "3s",
 			Name:       r.name + " grpc health check",
-			Status:     consul.HealthPassing,
+			Status:     consul_api.HealthPassing,
 		},
 	}
 	return r.client.Agent().ServiceRegister(reg)
 }
 
 func (r *registry) RegisterTLS(serviceID string, port int, tags []string) error {
-	reg := &consul.AgentServiceRegistration{
+	reg := &consul_api.AgentServiceRegistration{
 		ID:   serviceID,
 		Name: r.name,
 		Port: port,
 		Tags: tags,
-		Check: &consul.AgentServiceCheck{
+		Check: &consul_api.AgentServiceCheck{
 			GRPC:          fmt.Sprintf("127.0.0.1:%d", port),
 			GRPCUseTLS:    true,
 			TLSSkipVerify: true,
 			Interval:      "10s",
 			Timeout:       "3s",
 			Name:          r.name + " grpc health check",
-			Status:        consul.HealthPassing,
+			Status:        consul_api.HealthPassing,
 		},
 	}
 	return r.client.Agent().ServiceRegister(reg)

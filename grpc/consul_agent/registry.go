@@ -13,31 +13,33 @@ const DefaultConsulAgentAddr = "127.0.0.1:8500"
 type ServiceName string
 
 // Registry defines interface for service registration and discovery
-type Registry interface {
+type ConsulRegistry interface {
 	// Get healthy service instance endpoints
 	Service(tags []string) ([]string, error)
 	// Register a service instance
 	Register(serviceID string, port int, tags []string) error
+	// Register a service instance with TLS
+	RegisterTLS(serviceID string, port int, tags []string) error
 	// Deregister a service instance
 	Deregister(serviceID string) error
 }
 
-type registry struct {
+type consulRegistry struct {
 	client *consul_api.Client
 	name   string
 }
 
-// NewRegistry returns a Registry interface for services
-func NewRegistry(name ServiceName) (*registry, error) {
+// NewConsulRegistry returns a Registry interface for services
+func NewConsulRegistry(name ServiceName) (*consulRegistry, error) {
 	config := consul_api.DefaultConfig()
 	c, err := consul_api.NewClient(config)
 	if err != nil {
 		return nil, err
 	}
-	return &registry{client: c, name: string(name)}, nil
+	return &consulRegistry{client: c, name: string(name)}, nil
 }
 
-func (r *registry) Service(tags []string) ([]string, error) {
+func (r *consulRegistry) Service(tags []string) ([]string, error) {
 	passingOnly := true
 	addrs, _, err := r.client.Health().ServiceMultipleTags(r.name, tags, passingOnly, nil)
 	if err != nil {
@@ -53,7 +55,7 @@ func (r *registry) Service(tags []string) ([]string, error) {
 	return endpoints, nil
 }
 
-func (r *registry) Register(serviceID string, port int, tags []string) error {
+func (r *consulRegistry) Register(serviceID string, port int, tags []string) error {
 	reg := &consul_api.AgentServiceRegistration{
 		ID:   serviceID,
 		Name: r.name,
@@ -71,7 +73,7 @@ func (r *registry) Register(serviceID string, port int, tags []string) error {
 	return r.client.Agent().ServiceRegister(reg)
 }
 
-func (r *registry) RegisterTLS(serviceID string, port int, tags []string) error {
+func (r *consulRegistry) RegisterTLS(serviceID string, port int, tags []string) error {
 	reg := &consul_api.AgentServiceRegistration{
 		ID:   serviceID,
 		Name: r.name,
@@ -90,6 +92,6 @@ func (r *registry) RegisterTLS(serviceID string, port int, tags []string) error 
 	return r.client.Agent().ServiceRegister(reg)
 }
 
-func (r *registry) Deregister(serviceID string) error {
+func (r *consulRegistry) Deregister(serviceID string) error {
 	return r.client.Agent().ServiceDeregister(serviceID)
 }

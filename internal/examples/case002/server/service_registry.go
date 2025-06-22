@@ -10,8 +10,8 @@ const (
 	ServerPort = 8081
 )
 
-func NewTestServiceRegistry(sn consul_agent.ServiceName) (consul_agent.Registry, error) {
-	registry, err := consul_agent.NewRegistry(sn)
+func NewTestServiceRegistry(sn consul_agent.ServiceName) (consul_agent.ConsulRegistry, error) {
+	registry, err := consul_agent.NewConsulRegistry(sn)
 	if err != nil {
 		return nil, err
 	}

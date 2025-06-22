@@ -1,7 +1,7 @@
 package response
 
 import (
-	"github.com/gw-gong/gwkit-go/gin/middlewares"
+	"github.com/gw-gong/gwkit-go/gin/protocol"
 	gwkit_res "github.com/gw-gong/gwkit-go/http/response"
 	"github.com/gw-gong/gwkit-go/log"
 	gwkit_str "github.com/gw-gong/gwkit-go/utils/str"
@@ -18,7 +18,7 @@ type ClientResponse struct {
 
 func responseJson(c *gin.Context, err *gwkit_res.ErrorCode, data interface{}, errDetails interface{}) {
 	requestID := getRequestID(c)
-	c.Writer.Header().Set(middlewares.HttpHeaderRID, requestID)
+	c.Writer.Header().Set(protocol.HttpHeaderRID, requestID)
 	c.JSON(err.HttpStatus, ClientResponse{
 		Code:       err.Code,
 		Msg:        err.Msg,
@@ -29,7 +29,7 @@ func responseJson(c *gin.Context, err *gwkit_res.ErrorCode, data interface{}, er
 
 // getRequestID retrieves request ID from context or generates a new one
 func getRequestID(c *gin.Context) string {
-	if requestID, exists := c.Get(middlewares.HttpHeaderRID); exists {
+	if requestID, exists := c.Get(protocol.HttpHeaderRID); exists {
 		if rid, ok := requestID.(string); ok {
 			return rid
 		}

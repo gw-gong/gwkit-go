@@ -34,4 +34,5 @@ func main() {
 
 func subProcess(ctx context.Context) {
 	log.Debugc(ctx, "子流程执行中", log.Str("sub_process", "data_processing"))
+	panic("test panic")
 }

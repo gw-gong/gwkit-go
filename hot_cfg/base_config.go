@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 )
@@ -13,21 +14,6 @@ type BaseConfig struct {
 	Mu           sync.RWMutex
 	LocalConfig  localConfig
 	ConsulConfig consulConfig
-}
-
-type localConfig struct {
-	enable   bool
-	FilePath string
-	FileName string
-	FileType string
-}
-
-type consulConfig struct {
-	enable     bool
-	ConsulAddr string
-	ConsulKey  string
-	ConfigType string
-	ReloadTime int // second
 }
 
 type option func(*BaseConfig)
@@ -89,3 +75,54 @@ func NewBaseConfig(opts ...option) (*BaseConfig, error) {
 
 	return c, nil
 }
+
+func (c *BaseConfig) GetBaseConfig() *BaseConfig {
+	return c
+}
+
+func (c *BaseConfig) AsLocalConfig() LocalConfig {
+	if c.LocalConfig.enable {
+		return c
+	}
+	return nil
+}
+
+func (c *BaseConfig) WatchLocalConfig(reloadConfig func()) {
+	if c.LocalConfig.enable {
+		c.Viper.WatchConfig()
+		c.Viper.OnConfigChange(func(e fsnotify.Event) {
+			reloadConfig()
+		})
+	}
+}
+
+func (c *BaseConfig) AsConsulConfig() ConsulConfig {
+	if c.ConsulConfig.enable {
+		return c
+	}
+	return nil
+}
+
+func (c *BaseConfig) GetConsulReloadTime() int {
+	return c.ConsulConfig.ReloadTime
+}
+
+func (c *BaseConfig) ReadConsulConfig() error {
+	if err := c.Viper.ReadRemoteConfig(); err != nil {
+		return fmt.Errorf("failed to read remote configuration: %w, consulAddr: %s, consulKey: %s, configType: %s",
+			err, c.ConsulConfig.ConsulAddr, c.ConsulConfig.ConsulKey, c.ConsulConfig.ConfigType)
+	}
+	return nil
+}
+
+func (c *BaseConfig) CalculateConsulConfigHash() string {
+	return CalculateConfigHash(c.Viper)
+}
+
+// func (c *BaseConfig) UnmarshalConfig() error {
+// 	return nil
+// }
+
+// func (c *BaseConfig) ReloadConfig() error {
+// 	return nil
+// }

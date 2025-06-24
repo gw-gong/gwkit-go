@@ -7,7 +7,6 @@ import (
 
 	"github.com/gw-gong/gwkit-go/hot_cfg"
 	"github.com/gw-gong/gwkit-go/log"
-	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
 )
 
 var (
@@ -53,39 +52,11 @@ func (c *Config) UnmarshalConfig() error {
 	return nil
 }
 
-func (c *Config) Watch() {
-	go gwkit_common.WithRecover(func() {
-		c.watchConfig()
-	})
-}
-
-func (c *Config) watchConfig() {
-	ticker := time.NewTicker(time.Duration(c.BaseConfig.ConsulConfig.ReloadTime) * time.Second)
-	defer ticker.Stop()
-
-	// Record initial configuration hash
-	lastConfigHash := hot_cfg.CalculateConfigHash(c.BaseConfig.Viper)
-	log.Info("Initial configuration hash", log.Any("lastConfigHash", lastConfigHash))
-
-	for range ticker.C {
-		if err := c.BaseConfig.Viper.ReadRemoteConfig(); err != nil {
-			log.Error("Failed to read remote configuration", log.Err(err))
-			continue
-		}
-
-		currentHash := hot_cfg.CalculateConfigHash(c.BaseConfig.Viper)
-
-		// Compare hash values to detect changes
-		if currentHash != lastConfigHash {
-			log.Info("Configuration change detected", log.Str("lastConfigHash", lastConfigHash), log.Str("currentHash", currentHash))
-			lastConfigHash = currentHash
-
-			if err := c.UnmarshalConfig(); err != nil {
-				log.Error("Failed to parse updated configuration", log.Err(err))
-				continue
-			}
-
-			log.Info("Configuration manually updated", log.Any("config", NetCfg))
-		}
+func (c *Config) ReloadConfig() {
+	if err := c.UnmarshalConfig(); err != nil {
+		log.Error("Failed to reload config", log.Err(err))
+		return
 	}
+
+	log.Info("consul Config reloaded successfully", log.Any("config", NetCfg))
 }

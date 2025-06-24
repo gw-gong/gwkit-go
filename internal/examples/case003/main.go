@@ -28,7 +28,7 @@ func main() {
 	err = hucm.RegisterHotUpdateConfig(net_config.NetCfg)
 	gwkit_common.ExitOnErr(context.Background(), err)
 
-	hucm.WatchAll()
+	hucm.Watch()
 
 	// 测试热更新
 	// testLocoalConfig()

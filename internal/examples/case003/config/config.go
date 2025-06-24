@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/gw-gong/gwkit-go/hot_cfg"
 	"github.com/gw-gong/gwkit-go/log"
 )
@@ -53,17 +52,11 @@ func (c *Config) UnmarshalConfig() error {
 	return nil
 }
 
-func (c *Config) Watch() {
-	c.BaseConfig.Viper.WatchConfig()
-	c.BaseConfig.Viper.OnConfigChange(func(e fsnotify.Event) {
-		log.Info("Config file changed", log.Str("file", e.Name), log.Str("operation", e.Op.String()))
+func (c *Config) ReloadConfig() {
+	if err := c.UnmarshalConfig(); err != nil {
+		log.Error("Failed to reload config", log.Err(err))
+		return
+	}
 
-		// 重新解析配置
-		if err := c.UnmarshalConfig(); err != nil {
-			log.Error("Failed to reload config", log.Str("file", e.Name), log.Err(err))
-			return
-		}
-
-		log.Info("Config reloaded successfully", log.Any("config", c))
-	})
+	log.Info("Config reloaded successfully", log.Any("config", c))
 }

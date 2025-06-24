@@ -13,6 +13,15 @@
 - [响应处理](gin/response/README.md) - Gin框架的统一响应格式和处理
 - [中间件](gin/middlewares/README.md) - 包含请求ID生成、日志记录、异常恢复等中间件
 
+### gRPC相关
+
+- [gRPC拦截器](grpc/interceptors/README.md) - gRPC客户端和服务端拦截器，支持请求追踪、异常恢复、元数据传递
+- [Consul服务治理](grpc/consul_agent/README.md) - 基于Consul的服务注册与发现，支持健康检查和连接管理
+
+### 配置管理
+
+- [热配置](hot_cfg/README.md) - 支持本地文件和Consul的热配置更新，无需重启应用
+
 ### 日志
 
 - [日志模块](log/README.md) - 基于zap的日志组件，支持日志轮转和上下文
@@ -36,116 +45,7 @@
 go get github.com/gw-gong/gwkit-go
 ```
 
-### 使用Gin中间件和响应
-
-```go
-package main
-
-import (
-	"github.com/gin-gonic/gin"
-	"github.com/gw-gong/gwkit-go/gin/middlewares"
-	"github.com/gw-gong/gwkit-go/gin/response"
-	gwkit_res "github.com/gw-gong/gwkit-go/http/response"
-)
-
-func main() {
-	r := gin.New()
-	
-	// 注册中间件
-	middlewares.BindBasicMiddlewares(r)
-	
-	// 路由处理
-	r.GET("/users/:id", func(c *gin.Context) {
-		id := c.Param("id")
-		if id == "" {
-			response.ResponseError(c, gwkit_res.ErrParam)
-			return
-		}
-		
-		// 处理成功情况
-		user := map[string]interface{}{
-			"id": id,
-			"name": "用户名",
-		}
-		response.ResponseSuccess(c, user)
-	})
-	
-	r.Run(":8080")
-}
-```
-
-### 使用日志组件
-
-```go
-package main
-
-import (
-	"context"
-	"github.com/gw-gong/gwkit-go/log"
-)
-
-func main() {
-	// 初始化日志配置
-	config := log.NewDefaultLoggerConfig()
-	syncFn, err := log.InitGlobalLogger(config)
-	if err != nil {
-		panic(err)
-	}
-	defer syncFn()
-	
-	// 使用全局日志
-	log.Info("应用启动")
-	
-	// 带上下文的日志
-	ctx := context.Background()
-	ctx = log.SetGlobalLoggerToCtx(ctx)
-	ctx = log.WithFields(ctx, 
-		log.Str("request_id", "123456"),
-	)
-	log.Infoc(ctx, "处理请求")
-}
-```
-
-### 使用全局设置
-
-```go
-package main
-
-import (
-	"context"
-	"github.com/gw-gong/gwkit-go/global_settings"
-	"github.com/gw-gong/gwkit-go/log"
-	"os"
-)
-
-func main() {
-	// 设置运行环境
-	env := os.Getenv("APP_ENV")
-	if env == "" {
-		env = global_settings.ENV_DEV
-	}
-	global_settings.SetEnv(env)
-	
-	// 根据环境初始化日志
-	config := log.NewDefaultLoggerConfig()
-	if global_settings.GetEnv() == global_settings.ENV_DEV {
-		config.OutputToConsole.Encoding = log.OutputEncodingConsole
-	} else {
-		config.OutputToConsole.Encoding = log.OutputEncodingJSON
-	}
-	syncFn, err := log.InitGlobalLogger(config)
-	if err != nil {
-		panic(err)
-	}
-	defer syncFn()
-	
-	// 初始化服务上下文
-	ctx := context.Background()
-	global_settings.ResetServiceContext(ctx)
-	
-	// ...
-}
-```
+更多详细的使用示例请查看各模块的文档。
 
 ## 组件列表
 
@@ -154,6 +54,9 @@ func main() {
 | `http/response` | HTTP响应处理 | [文档](http/response/README.md) |
 | `gin/response` | Gin响应格式化 | [文档](gin/response/README.md) |
 | `gin/middlewares` | Gin中间件集合 | [文档](gin/middlewares/README.md) |
+| `grpc/interceptors` | gRPC拦截器 | [文档](grpc/interceptors/README.md) |
+| `grpc/consul_agent` | Consul服务治理 | [文档](grpc/consul_agent/README.md) |
+| `hot_cfg` | 热配置管理 | [文档](hot_cfg/README.md) |
 | `log` | 日志处理组件 | [文档](log/README.md) |
 | `global_settings` | 全局设置和环境管理 | [文档](global_settings/README.md) |
 | `utils/str` | 字符串工具 | - |
@@ -166,6 +69,11 @@ func main() {
 - [gin-gonic/gin](https://github.com/gin-gonic/gin) - HTTP Web框架
 - [uber-go/zap](https://github.com/uber-go/zap) - 高性能日志库
 - [google/uuid](https://github.com/google/uuid) - UUID生成
+- [google.golang.org/grpc](https://github.com/grpc/grpc-go) - gRPC框架
+- [hashicorp/consul/api](https://github.com/hashicorp/consul/api) - Consul API客户端
+- [mbobakov/grpc-consul-resolver](https://github.com/mbobakov/grpc-consul-resolver) - gRPC Consul解析器
+- [spf13/viper](https://github.com/spf13/viper) - 配置管理库
+- [fsnotify/fsnotify](https://github.com/fsnotify/fsnotify) - 文件系统监控
 
 ## 贡献
 

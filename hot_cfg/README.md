@@ -13,6 +13,7 @@
 ## 文件说明
 
 ### base_config.go
+
 提供基础配置功能：
 
 - `BaseConfig`: 基础配置结构体，包含Viper实例和配置选项
@@ -24,6 +25,7 @@
 - `CalculateConsulConfigHash()`: 计算配置哈希值
 
 ### hot_update_manager.go
+
 提供热更新管理器：
 
 - `HotUpdate`: 热更新接口，定义配置更新方法
@@ -33,12 +35,14 @@
 - `Watch()`: 启动所有配置的监控
 
 ### local_config.go
+
 本地配置接口定义：
 
 - `LocalConfig`: 本地配置接口
 - `WatchLocalConfig()`: 监控本地配置文件变更
 
 ### consul_config.go
+
 Consul配置接口定义：
 
 - `ConsulConfig`: Consul配置接口
@@ -47,6 +51,7 @@ Consul配置接口定义：
 - `CalculateConsulConfigHash()`: 计算配置哈希
 
 ### utils.go
+
 工具函数：
 
 - `CalculateConfigHash()`: 计算配置的MD5哈希值，用于检测配置变更
@@ -63,17 +68,17 @@ import (
 )
 
 type Config struct {
-    *hot_cfg.BaseConfig
-    Database struct {
-        Host     string `yaml:"host"`
-        Port     int    `yaml:"port"`
-        Username string `yaml:"username"`
-        Password string `yaml:"password"`
-    } `yaml:"database"`
-    API struct {
-        Key     string        `yaml:"key"`
-        Timeout time.Duration `yaml:"timeout"`
-    } `yaml:"api"`
+	*hot_cfg.BaseConfig
+	Database struct {
+		Host     string `yaml:"host" mapstructure:"host"`
+		Port     int    `yaml:"port" mapstructure:"port"`
+		Username string `yaml:"username" mapstructure:"username"`
+		Password string `yaml:"password" mapstructure:"password"`
+	} `yaml:"database" mapstructure:"database"`
+	API struct {
+		Key     string        `yaml:"key" mapstructure:"key"`
+		Timeout time.Duration `yaml:"timeout" mapstructure:"timeout"`
+	} `yaml:"api" mapstructure:"api"`
 }
 
 func InitConfig(filePath, fileName, fileType string) error {
@@ -91,7 +96,7 @@ func InitConfig(filePath, fileName, fileType string) error {
 func (c *Config) UnmarshalConfig() error {
     c.BaseConfig.Mu.Lock()
     defer c.BaseConfig.Mu.Unlock()
-    
+  
     return c.BaseConfig.Viper.Unmarshal(&c)
 }
 
@@ -114,17 +119,17 @@ import (
 )
 
 type Config struct {
-    *hot_cfg.BaseConfig
-    Database struct {
-        Host     string `yaml:"host"`
-        Port     int    `yaml:"port"`
-        Username string `yaml:"username"`
-        Password string `yaml:"password"`
-    } `yaml:"database"`
-    API struct {
-        Key     string        `yaml:"key"`
-        Timeout time.Duration `yaml:"timeout"`
-    } `yaml:"api"`
+	*hot_cfg.BaseConfig
+	Database struct {
+		Host     string `yaml:"host" mapstructure:"host"`
+		Port     int    `yaml:"port" mapstructure:"port"`
+		Username string `yaml:"username" mapstructure:"username"`
+		Password string `yaml:"password" mapstructure:"password"`
+	} `yaml:"database" mapstructure:"database"`
+	API struct {
+		Key     string        `yaml:"key" mapstructure:"key"`
+		Timeout time.Duration `yaml:"timeout" mapstructure:"timeout"`
+	} `yaml:"api" mapstructure:"api"`
 }
 
 func InitConsulConfig(consulAddr, consulKey, configType string, reloadTime int) error {
@@ -142,7 +147,7 @@ func InitConsulConfig(consulAddr, consulKey, configType string, reloadTime int) 
 func (c *Config) UnmarshalConfig() error {
     c.BaseConfig.Mu.Lock()
     defer c.BaseConfig.Mu.Unlock()
-    
+  
     return c.BaseConfig.Viper.Unmarshal(&c)
 }
 
@@ -210,6 +215,7 @@ func main() {
 ## 配置格式
 
 ### 本地配置文件 (config-dev.yaml)
+
 ```yaml
 database:
   host: localhost
@@ -222,26 +228,28 @@ api:
 ```
 
 ### Consul配置
+
 在Consul中存储相同格式的配置内容，通过指定的key进行访问。
 
 ## 工作流程
 
 1. **初始化配置**:
-   - 创建配置结构体，嵌入`BaseConfig`
-   - 使用`NewBaseConfig()`初始化基础配置
-   - 实现`UnmarshalConfig()`和`ReloadConfig()`方法
 
+   - 创建配置结构体，嵌入 `BaseConfig`, 注意一定要使用label "mapstructure"
+   - 使用 `NewBaseConfig()`初始化基础配置
+   - 实现 `UnmarshalConfig()`和 `ReloadConfig()`方法
 2. **注册配置**:
-   - 获取热更新管理器实例
-   - 调用`RegisterHotUpdateConfig()`注册配置
 
+   - 获取热更新管理器实例
+   - 调用 `RegisterHotUpdateConfig()`注册配置
 3. **启动监控**:
-   - 调用`Watch()`启动所有配置的监控
+
+   - 调用 `Watch()`启动所有配置的监控
    - 本地文件：使用fsnotify监控文件变更
    - Consul配置：定时检查配置哈希值变化
-
 4. **配置更新**:
-   - 检测到配置变更时自动调用`ReloadConfig()`
+
+   - 检测到配置变更时自动调用 `ReloadConfig()`
    - 重新解析配置并更新内存中的配置对象
    - 记录更新日志
 
@@ -257,4 +265,4 @@ api:
 - `github.com/spf13/viper`: 配置管理库
 - `github.com/fsnotify/fsnotify`: 文件系统监控
 - `github.com/spf13/viper/remote`: 远程配置支持
-- `crypto/md5`: 配置哈希计算 
+- `crypto/md5`: 配置哈希计算

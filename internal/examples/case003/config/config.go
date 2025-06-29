@@ -17,15 +17,15 @@ var (
 type Config struct {
 	*hot_cfg.BaseConfig
 	Database struct {
-		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-	} `yaml:"database"`
+		Host     string `yaml:"host" mapstructure:"host"`
+		Port     int    `yaml:"port" mapstructure:"port"`
+		Username string `yaml:"username" mapstructure:"username"`
+		Password string `yaml:"password" mapstructure:"password"`
+	} `yaml:"database" mapstructure:"database"`
 	API struct {
-		Key     string        `yaml:"key"`
-		Timeout time.Duration `yaml:"timeout"`
-	} `yaml:"api"`
+		Key     string        `yaml:"key" mapstructure:"key"`
+		Timeout time.Duration `yaml:"timeout" mapstructure:"timeout"`
+	} `yaml:"api" mapstructure:"api"`
 }
 
 func InitConfig(filePath, fileName, fileType string) error {

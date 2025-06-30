@@ -14,8 +14,7 @@ type HotUpdate interface {
 	AsConsulConfig() ConsulConfig
 
 	// Only need to implement these two methods, others inherit from BaseConfig
-	UnmarshalConfig() error
-	ReloadConfig()
+	LoadConfig()
 }
 
 var (
@@ -43,9 +42,7 @@ func GetHotUpdateManager() *hotUpdateConfigManager {
 }
 
 func (m *hotUpdateConfigManager) RegisterHotUpdateConfig(hotUpdate HotUpdate) error {
-	if err := hotUpdate.UnmarshalConfig(); err != nil {
-		return fmt.Errorf("hot update init failed: %w", err)
-	}
+	hotUpdate.LoadConfig()
 	m.hotUpdates = append(m.hotUpdates, hotUpdate)
 	return nil
 }
@@ -56,11 +53,11 @@ func (m *hotUpdateConfigManager) Watch() error {
 
 	for _, hotUpdate := range m.hotUpdates {
 		if localConfig := hotUpdate.AsLocalConfig(); localConfig != nil {
-			localConfig.WatchLocalConfig(hotUpdate.ReloadConfig)
+			localConfig.WatchLocalConfig(hotUpdate.LoadConfig)
 		} else if consulConfig := hotUpdate.AsConsulConfig(); consulConfig != nil {
 			go gwkit_common.WithRecover(func() {
 				func(consulConfig ConsulConfig, hotUpdate HotUpdate) {
-					m.watchConsulConfig(consulConfig, hotUpdate.ReloadConfig)
+					m.watchConsulConfig(consulConfig, hotUpdate.LoadConfig)
 				}(consulConfig, hotUpdate)
 			})
 		} else {
@@ -74,7 +71,7 @@ func (m *hotUpdateConfigManager) Watch() error {
 	return nil
 }
 
-func (m *hotUpdateConfigManager) watchConsulConfig(consulConfig ConsulConfig, reloadConfig func()) {
+func (m *hotUpdateConfigManager) watchConsulConfig(consulConfig ConsulConfig, loadConfig func()) {
 	ticker := time.NewTicker(time.Duration(consulConfig.GetConsulReloadTime()) * time.Second)
 	defer ticker.Stop()
 
@@ -88,7 +85,7 @@ func (m *hotUpdateConfigManager) watchConsulConfig(consulConfig ConsulConfig, re
 		currentConfigHash := consulConfig.CalculateConsulConfigHash()
 		if currentConfigHash != lastConfigHash {
 			lastConfigHash = currentConfigHash
-			reloadConfig()
+			loadConfig()
 		}
 	}
 }

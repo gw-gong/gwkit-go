@@ -42,21 +42,14 @@ func InitConfig(filePath, fileName, fileType string) error {
 	return err
 }
 
-func (c *Config) UnmarshalConfig() error {
+func (c *Config) LoadConfig() {
 	c.BaseConfig.Mu.Lock()
 	defer c.BaseConfig.Mu.Unlock()
 
 	if err := c.BaseConfig.Viper.Unmarshal(&c); err != nil {
-		return fmt.Errorf("unmarshal config failed: %w", err)
-	}
-	return nil
-}
-
-func (c *Config) ReloadConfig() {
-	if err := c.UnmarshalConfig(); err != nil {
-		log.Error("Failed to reload config", log.Err(err))
+		log.Error("unmarshal config failed", log.Err(err))
 		return
 	}
 
-	log.Info("Config reloaded successfully", log.Any("config", c))
+	log.Info("LoadConfig", log.Any("config", c))
 }

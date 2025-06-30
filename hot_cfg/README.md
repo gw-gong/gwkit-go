@@ -64,7 +64,17 @@ Consul配置接口定义：
 package config
 
 import (
-    "github.com/gw-gong/gwkit-go/hot_cfg"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/gw-gong/gwkit-go/hot_cfg"
+	"github.com/gw-gong/gwkit-go/log"
+)
+
+var (
+	Cfg  *Config
+	once sync.Once
 )
 
 type Config struct {
@@ -82,40 +92,50 @@ type Config struct {
 }
 
 func InitConfig(filePath, fileName, fileType string) error {
-    cfg := &Config{}
-    baseConfig, err := hot_cfg.NewBaseConfig(
-        hot_cfg.WithLocalConfig(filePath, fileName, fileType),
-    )
-    if err != nil {
-        return err
-    }
-    cfg.BaseConfig = baseConfig
-    return cfg.UnmarshalConfig()
+	var err error
+	once.Do(func() {
+		Cfg = &Config{}
+		Cfg.BaseConfig, err = hot_cfg.NewBaseConfig(
+			hot_cfg.WithLocalConfig(filePath, fileName, fileType),
+		)
+		if err != nil {
+			err = fmt.Errorf("init base config failed: %w", err)
+		}
+	})
+	return err
 }
 
-func (c *Config) UnmarshalConfig() error {
-    c.BaseConfig.Mu.Lock()
-    defer c.BaseConfig.Mu.Unlock()
-  
-    return c.BaseConfig.Viper.Unmarshal(&c)
+func (c *Config) LoadConfig() {
+	c.BaseConfig.Mu.Lock()
+	defer c.BaseConfig.Mu.Unlock()
+
+	if err := c.BaseConfig.Viper.Unmarshal(&c); err != nil {
+		log.Error("unmarshal config failed", log.Err(err))
+		return
+	}
+
+	log.Info("LoadConfig", log.Any("config", c))
 }
 
-func (c *Config) ReloadConfig() {
-    if err := c.UnmarshalConfig(); err != nil {
-        log.Error("Failed to reload config", log.Err(err))
-        return
-    }
-    log.Info("Config reloaded successfully", log.Any("config", c))
-}
 ```
 
 ### Consul远程配置
 
 ```go
-package config
+package net_config
 
 import (
-    "github.com/gw-gong/gwkit-go/hot_cfg"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/gw-gong/gwkit-go/hot_cfg"
+	"github.com/gw-gong/gwkit-go/log"
+)
+
+var (
+	NetCfg *Config
+	once   sync.Once
 )
 
 type Config struct {
@@ -132,31 +152,30 @@ type Config struct {
 	} `yaml:"api" mapstructure:"api"`
 }
 
-func InitConsulConfig(consulAddr, consulKey, configType string, reloadTime int) error {
-    cfg := &Config{}
-    baseConfig, err := hot_cfg.NewBaseConfig(
-        hot_cfg.WithConsulConfig(consulAddr, consulKey, configType, reloadTime),
-    )
-    if err != nil {
-        return err
-    }
-    cfg.BaseConfig = baseConfig
-    return cfg.UnmarshalConfig()
+func InitNetConfig(consulAddr, consulKey, configType string, reloadTime int) error {
+	var err error
+	once.Do(func() {
+		NetCfg = &Config{}
+		NetCfg.BaseConfig, err = hot_cfg.NewBaseConfig(
+			hot_cfg.WithConsulConfig(consulAddr, consulKey, configType, reloadTime),
+		)
+		if err != nil {
+			err = fmt.Errorf("init base config failed: %w", err)
+		}
+	})
+	return err
 }
 
-func (c *Config) UnmarshalConfig() error {
-    c.BaseConfig.Mu.Lock()
-    defer c.BaseConfig.Mu.Unlock()
-  
-    return c.BaseConfig.Viper.Unmarshal(&c)
-}
+func (c *Config) LoadConfig() {
+	c.BaseConfig.Mu.Lock()
+	defer c.BaseConfig.Mu.Unlock()
 
-func (c *Config) ReloadConfig() {
-    if err := c.UnmarshalConfig(); err != nil {
-        log.Error("Failed to reload config", log.Err(err))
-        return
-    }
-    log.Info("Consul config reloaded successfully", log.Any("config", c))
+	if err := c.BaseConfig.Viper.Unmarshal(&c); err != nil {
+		log.Error("unmarshal config failed", log.Err(err))
+		return
+	}
+
+	log.Info("LoadConfig", log.Any("config", c))
 }
 ```
 
@@ -166,50 +185,59 @@ func (c *Config) ReloadConfig() {
 package main
 
 import (
-    "github.com/gw-gong/gwkit-go/hot_cfg"
-    "github.com/gw-gong/gwkit-go/log"
+	"context"
+	"time"
+
+	"github.com/gw-gong/gwkit-go/hot_cfg"
+	"github.com/gw-gong/gwkit-go/internal/examples/case003/config"
+	// "github.com/gw-gong/gwkit-go/internal/examples/case003/net_config"
+	"github.com/gw-gong/gwkit-go/log"
+	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
 )
 
 func main() {
-    // 初始化日志
-    syncFn, err := log.InitGlobalLogger(log.NewDefaultLoggerConfig())
-    if err != nil {
-        panic(err)
-    }
-    defer syncFn()
+	syncFn, err := log.InitGlobalLogger(log.NewDefaultLoggerConfig())
+	gwkit_common.ExitOnErr(context.Background(), err)
+	defer syncFn()
 
-    // 获取热更新管理器
-    hucm := hot_cfg.GetHotUpdateManager()
+	hucm := hot_cfg.GetHotUpdateManager()
 
-    // 注册本地配置
-    err = config.InitConfig("config", "config-dev.yaml", "yaml")
-    if err != nil {
-        panic(err)
-    }
-    err = hucm.RegisterHotUpdateConfig(config.Cfg)
-    if err != nil {
-        panic(err)
-    }
+	err = config.InitConfig("config", "config-dev.yaml", "yaml")
+	gwkit_common.ExitOnErr(context.Background(), err)
+	err = hucm.RegisterHotUpdateConfig(config.Cfg)
+	gwkit_common.ExitOnErr(context.Background(), err)
 
-    // 注册Consul配置
-    err = net_config.InitNetConfig("127.0.0.1:8500", "config/config-dev.yaml", "yaml", 10)
-    if err != nil {
-        panic(err)
-    }
-    err = hucm.RegisterHotUpdateConfig(net_config.NetCfg)
-    if err != nil {
-        panic(err)
-    }
+	// err = net_config.InitNetConfig("127.0.0.1:8500", "config/config-dev.yaml", "yaml", 10)
+	// gwkit_common.ExitOnErr(context.Background(), err)
+	// err = hucm.RegisterHotUpdateConfig(net_config.NetCfg)
+	// gwkit_common.ExitOnErr(context.Background(), err)
 
-    // 启动监控
-    err = hucm.Watch()
-    if err != nil {
-        panic(err)
-    }
+	hucm.Watch()
 
-    // 应用继续运行，配置会自动热更新
-    select {}
+	// 测试热更新
+	testLocoalConfig()
+	// testNetConfig()
+	select {}
 }
+
+func testLocoalConfig() {
+	go func() {
+		for {
+			log.Info("testLocoalConfig", log.Any("config", config.Cfg))
+			time.Sleep(5 * time.Second)
+		}
+	}()
+}
+
+// func testNetConfig() {
+// 	go func() {
+// 		for {
+// 			log.Info("testNetConfig", log.Any("config", net_config.NetCfg))
+// 			time.Sleep(5 * time.Second)
+// 		}
+// 	}()
+// }
+
 ```
 
 ## 配置格式
@@ -237,7 +265,7 @@ api:
 
    - 创建配置结构体，嵌入 `BaseConfig`, 注意一定要使用label "mapstructure"
    - 使用 `NewBaseConfig()`初始化基础配置
-   - 实现 `UnmarshalConfig()`和 `ReloadConfig()`方法
+   - 实现 `LoadConfig()`方法
 2. **注册配置**:
 
    - 获取热更新管理器实例
@@ -249,7 +277,7 @@ api:
    - Consul配置：定时检查配置哈希值变化
 4. **配置更新**:
 
-   - 检测到配置变更时自动调用 `ReloadConfig()`
+   - 检测到配置变更时自动调用 `LoadConfig()`
    - 重新解析配置并更新内存中的配置对象
    - 记录更新日志
 

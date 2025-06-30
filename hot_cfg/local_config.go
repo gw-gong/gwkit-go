@@ -1,7 +1,7 @@
 package hot_cfg
 
 type LocalConfig interface {
-	WatchLocalConfig(reloadConfig func())
+	WatchLocalConfig(loadConfig func())
 }
 
 type localConfig struct {

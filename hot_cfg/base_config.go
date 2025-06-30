@@ -87,11 +87,11 @@ func (c *BaseConfig) AsLocalConfig() LocalConfig {
 	return nil
 }
 
-func (c *BaseConfig) WatchLocalConfig(reloadConfig func()) {
+func (c *BaseConfig) WatchLocalConfig(loadConfig func()) {
 	if c.LocalConfig.enable {
 		c.Viper.WatchConfig()
 		c.Viper.OnConfigChange(func(e fsnotify.Event) {
-			reloadConfig()
+			loadConfig()
 		})
 	}
 }
@@ -118,11 +118,3 @@ func (c *BaseConfig) ReadConsulConfig() error {
 func (c *BaseConfig) CalculateConsulConfigHash() string {
 	return CalculateConfigHash(c.Viper)
 }
-
-// func (c *BaseConfig) UnmarshalConfig() error {
-// 	return nil
-// }
-
-// func (c *BaseConfig) ReloadConfig() error {
-// 	return nil
-// }

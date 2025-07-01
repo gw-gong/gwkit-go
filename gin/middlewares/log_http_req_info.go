@@ -18,7 +18,7 @@ func LogHttpReqInfo(logRequestBody bool) gin.HandlerFunc {
 		// Read request body (with size limit)
 		bodyStr := "hidden"
 		if logRequestBody && c.Request.Body != nil {
-			body, _ := http.ReadAndRestoreReqBody(c.Request, 1024)
+			body, _ := http.ReadAndRestoreReqBody(c.Request)
 			bodyStr = string(body)
 		}
 

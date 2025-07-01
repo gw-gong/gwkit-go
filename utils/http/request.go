@@ -6,12 +6,17 @@ import (
 	"net/http"
 )
 
-func ReadAndRestoreReqBody(req *http.Request, maxSize int64) ([]byte, error) {
-    body, err := io.ReadAll(io.LimitReader(req.Body, maxSize))	// unit is bytes
-    if err != nil {
-        return nil, err
-    }
+func ReadAndRestoreReqBody(req *http.Request) ([]byte, error) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
 
-    req.Body = io.NopCloser(bytes.NewBuffer(body))
-    return body, nil
+	// Close the original Body to avoid resource leaks
+	if req.Body != nil {
+		_ = req.Body.Close()
+	}
+
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
+	return body, nil
 }

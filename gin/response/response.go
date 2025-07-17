@@ -12,7 +12,7 @@ import (
 type ClientResponse struct {
 	Code       int         `json:"code"`
 	Msg        string      `json:"msg"`
-	Data       interface{} `json:"data"`
+	Data       interface{} `json:"data,omitempty"`
 	ErrDetails interface{} `json:"err_details,omitempty"`
 }
 

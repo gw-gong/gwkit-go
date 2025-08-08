@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DefaultTimeoutSubmit = time.Second * 10
+	DefaultTimeoutSubmit = time.Second * 5
 )
 
 type WorkerPool interface {

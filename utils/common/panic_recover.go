@@ -9,36 +9,23 @@ import (
 
 type panicHandler func(err interface{})
 
-type optionPanicHandler func(*optionPanicHandlerParams)
-
-type optionPanicHandlerParams struct {
-	panicHandler panicHandler
-}
-
-func WithPanicHandler(panicHandler panicHandler) optionPanicHandler {
-	return func(optParams *optionPanicHandlerParams) {
-		optParams.panicHandler = panicHandler
-	}
-}
-
-func WithRecover(f func(), opts ...optionPanicHandler) {
+// WithRecover is a function that recovers from a panic and calls the panic handler.
+// !!! Only one panicHandler needs to be passed in; if multiple are provided, only the first one will be used. !!!
+func WithRecover(f func(), panicHandlers ...panicHandler) {
 	defer func() {
 		if err := recover(); err != nil {
-			optParams := &optionPanicHandlerParams{}
-			for _, opt := range opts {
-				opt(optParams)
+			if len(panicHandlers) > 0 && panicHandlers[0] != nil {
+				panicHandlers[0](err)
+			} else {
+				DefaultPanicHandler(err)
 			}
-			if optParams.panicHandler == nil {
-				optParams.panicHandler = defaultPanicHandler
-			}
-			optParams.panicHandler(err)
 		}
 	}()
 
 	f()
 }
 
-func defaultPanicHandler(err interface{}) {
+func DefaultPanicHandler(err interface{}) {
 	log.Error("panic", log.Any("err", err), log.Str("stack", string(debug.Stack())))
 }
 

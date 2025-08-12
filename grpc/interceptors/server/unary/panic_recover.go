@@ -14,11 +14,11 @@ func PanicRecoverInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, errInterceptor error) {
 		gwkit_common.WithRecover(func() {
 			resp, errInterceptor = handler(ctx, req)
-		}, gwkit_common.WithPanicHandler(func(err interface{}) {
+		}, func(err interface{}) {
 			gwkit_common.DefaultPanicWithCtx(ctx, err)
 			errInterceptor = status.Errorf(codes.Internal, "Internal Server Error (panic recovered)")
 			resp = nil
-		}))
+		})
 		return
 	}
 }

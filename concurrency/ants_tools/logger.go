@@ -1,4 +1,4 @@
-package ants_tool
+package ants_tools
 
 import (
 	"context"
@@ -18,9 +18,13 @@ type Logger interface {
 */
 
 type SugarLogger struct {
-	ctx context.Context
+	Ctx context.Context
 }
 
 func (l *SugarLogger) Printf(format string, args ...interface{}) {
-	log.Infofc(l.ctx, format, args...)
+	if l == nil || l.Ctx == nil {
+		log.Infof(format, args...)
+		return
+	}
+	log.Infofc(l.Ctx, format, args...)
 }

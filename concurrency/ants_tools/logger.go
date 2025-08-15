@@ -2,6 +2,7 @@ package ants_tools
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gw-gong/gwkit-go/log"
 )
@@ -22,6 +23,7 @@ type SugarLogger struct {
 }
 
 func (l *SugarLogger) Printf(format string, args ...interface{}) {
+	format = fmt.Sprintf("[ants] %s", format)
 	if l == nil || l.Ctx == nil {
 		log.Infof(format, args...)
 		return

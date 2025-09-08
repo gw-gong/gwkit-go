@@ -25,6 +25,7 @@ func GenerateRID(c *gin.Context) {
 	c.Request = c.Request.WithContext(reqCtx)
 
 	c.Set(HttpHeaderRID, requestID)
+	c.Header(HttpHeaderRID, requestID) // response header
 
 	c.Next()
 }

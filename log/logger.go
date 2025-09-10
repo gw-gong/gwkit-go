@@ -57,7 +57,15 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 			MaxAge:     loggerConfig.OutputToFile.MaxAge,     // Maximum number of days to retain old files
 			Compress:   loggerConfig.OutputToFile.Compress,   // Whether to compress after rotation
 		}
-		writeSyncer = zapcore.AddSync(lumber)
+
+		// Use buffer if enabled
+		if loggerConfig.OutputToFile.WithBuffer {
+			writeSyncer = &zapcore.BufferedWriteSyncer{
+				WS: zapcore.AddSync(lumber),
+			}
+		} else {
+			writeSyncer = zapcore.AddSync(lumber)
+		}
 
 		syncGlobalLogger = func() {
 			if err := zap.L().Sync(); err != nil {

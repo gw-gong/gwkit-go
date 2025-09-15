@@ -45,6 +45,7 @@ func NewDefaultLoggerConfig() *LoggerConfig {
 		OutputToFile: OutputToFileConfig{
 			Enable:     false,
 			FilePath:   DefaultOutputFilePath,
+			WithBuffer: false,
 			MaxSize:    500,
 			MaxBackups: 10,
 			MaxAge:     30,

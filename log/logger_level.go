@@ -23,5 +23,6 @@ func MapLoggerLevel(level string) zapcore.Level {
 	case LoggerLevelError:
 		return zap.ErrorLevel
 	}
+	Errorf("unknown logger level: %s", level)
 	return zap.InfoLevel
 }

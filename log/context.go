@@ -19,7 +19,3 @@ func getLoggerFromCtx(ctx context.Context) *zap.Logger {
 	}
 	return logger
 }
-
-func SetGlobalLoggerToCtx(ctx context.Context) context.Context {
-	return setLoggerToCtx(ctx, zap.L())
-}

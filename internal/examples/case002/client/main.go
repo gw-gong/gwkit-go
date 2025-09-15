@@ -18,7 +18,6 @@ func main() {
 
 	requestID := gwkit_str.GenerateULID()
 	ctx := gwkit_common.SetRequestIDToCtx(context.Background(), requestID)
-	ctx = log.SetGlobalLoggerToCtx(ctx)
 	ctx = log.WithFieldRequestID(ctx, requestID)
 
 	testClient, err := NewTestClient("127.0.0.1:8500", "test_service", "test", "",

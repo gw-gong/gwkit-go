@@ -11,6 +11,11 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+func init() {
+	// Ensure that calling the log package at any time will produce output.
+	_, _ = InitGlobalLogger(NewDefaultLoggerConfig())
+}
+
 func InitGlobalLogger(loggerConfig *LoggerConfig) (func(), error) {
 	logger, syncGlobalLogger, err := newLogger(loggerConfig)
 	if err != nil {

@@ -43,9 +43,6 @@ func InitNetConfig(consulAddr, consulKey, configType string, reloadTime int) err
 }
 
 func (c *Config) LoadConfig() {
-	c.BaseConfig.Mu.Lock()
-	defer c.BaseConfig.Mu.Unlock()
-
 	if err := c.BaseConfig.Viper.Unmarshal(&c); err != nil {
 		log.Error("unmarshal config failed", log.Err(err))
 		return

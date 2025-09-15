@@ -23,6 +23,7 @@ var (
 )
 
 type hotUpdateConfigManager struct {
+	mux        sync.Mutex
 	hotUpdates []HotUpdate
 }
 
@@ -85,7 +86,9 @@ func (m *hotUpdateConfigManager) watchConsulConfig(consulConfig ConsulConfig, lo
 		currentConfigHash := consulConfig.CalculateConsulConfigHash()
 		if currentConfigHash != lastConfigHash {
 			lastConfigHash = currentConfigHash
+			m.mux.Lock()
 			loadConfig()
+			m.mux.Unlock()
 		}
 	}
 }

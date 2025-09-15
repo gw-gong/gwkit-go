@@ -11,7 +11,7 @@ import (
 
 type BaseConfig struct {
 	Viper        *viper.Viper
-	Mu           sync.RWMutex
+	mux          sync.Mutex
 	LocalConfig  localConfig
 	ConsulConfig consulConfig
 }
@@ -91,6 +91,8 @@ func (c *BaseConfig) WatchLocalConfig(loadConfig func()) {
 	if c.LocalConfig.enable {
 		c.Viper.WatchConfig()
 		c.Viper.OnConfigChange(func(e fsnotify.Event) {
+			c.mux.Lock()
+			defer c.mux.Unlock()
 			loadConfig()
 		})
 	}

@@ -43,9 +43,6 @@ func InitConfig(filePath, fileName, fileType string) error {
 }
 
 func (c *Config) LoadConfig() {
-	c.BaseConfig.Mu.Lock()
-	defer c.BaseConfig.Mu.Unlock()
-
 	if err := c.BaseConfig.Viper.Unmarshal(&c); err != nil {
 		log.Error("unmarshal config failed", log.Err(err))
 		return

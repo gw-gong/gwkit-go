@@ -16,11 +16,11 @@ func main() {
 	gwkit_common.ExitOnErr(context.Background(), err)
 	defer syncFn()
 
-	hucm := hot_cfg.GetHotUpdateManager()
+	hlm := hot_cfg.NewHotLoaderManager()
 
 	err = config.InitConfig("config", "config-dev.yaml", "yaml")
 	gwkit_common.ExitOnErr(context.Background(), err)
-	err = hucm.RegisterHotUpdateConfig(config.Cfg)
+	err = hlm.RegisterHotLoader(config.Cfg)
 	gwkit_common.ExitOnErr(context.Background(), err)
 
 	// err = net_config.InitNetConfig("127.0.0.1:8500", "config/config-dev.yaml", "yaml", 10)
@@ -28,7 +28,7 @@ func main() {
 	// err = hucm.RegisterHotUpdateConfig(net_config.NetCfg)
 	// gwkit_common.ExitOnErr(context.Background(), err)
 
-	hucm.Watch()
+	hlm.Watch()
 
 	// 测试热更新
 	testLocoalConfig()

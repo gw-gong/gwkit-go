@@ -7,6 +7,7 @@ import (
 	"github.com/gw-gong/gwkit-go/log"
 	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
 	gwkit_str "github.com/gw-gong/gwkit-go/utils/str"
+	"github.com/gw-gong/gwkit-go/utils/trace"
 
 	"google.golang.org/grpc"
 )
@@ -17,7 +18,7 @@ func main() {
 	defer syncFn()
 
 	requestID := gwkit_str.GenerateULID()
-	ctx := gwkit_common.SetRequestIDToCtx(context.Background(), requestID)
+	ctx := trace.SetRequestIDToCtx(context.Background(), requestID)
 	ctx = log.WithFieldRequestID(ctx, requestID)
 
 	testClient, err := NewTestClient("127.0.0.1:8500", "test_service", "test", "",

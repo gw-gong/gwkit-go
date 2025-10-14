@@ -1,7 +1,7 @@
 package response
 
 import (
-	gwkit_res "github.com/gw-gong/gwkit-go/http/response"
+	"github.com/gw-gong/gwkit-go/http/err_code"
 	"github.com/gw-gong/gwkit-go/log"
 
 	"github.com/gin-gonic/gin"
@@ -14,9 +14,9 @@ type ClientResponse struct {
 	ErrDetails interface{} `json:"err_details,omitempty"`
 }
 
-func responseJson(c *gin.Context, err *gwkit_res.ErrorCode, data interface{}, errDetails interface{}) {
+func responseJson(c *gin.Context, err *err_code.ErrorCode, data interface{}, errDetails interface{}) {
 	if err == nil {
-		err = gwkit_res.ErrUnknown
+		err = err_code.ErrUnknown
 		log.Warnc(c.Request.Context(), "error is nil, set to unknown, this is a bug", log.Err(err))
 	}
 	c.JSON(err.HttpStatus, ClientResponse{
@@ -29,15 +29,15 @@ func responseJson(c *gin.Context, err *gwkit_res.ErrorCode, data interface{}, er
 
 // ResponseSuccess sends a success response with data
 func ResponseSuccess(c *gin.Context, data interface{}) {
-	responseJson(c, gwkit_res.Success, data, nil)
+	responseJson(c, err_code.Success, data, nil)
 }
 
 // ResponseError sends an error response
-func ResponseError(c *gin.Context, err *gwkit_res.ErrorCode) {
+func ResponseError(c *gin.Context, err *err_code.ErrorCode) {
 	responseJson(c, err, nil, nil)
 }
 
 // ResponseErrorWithDetails sends an error response with optional data and detailed error information
-func ResponseErrorWithDetails(c *gin.Context, err *gwkit_res.ErrorCode, errDetails interface{}) {
+func ResponseErrorWithDetails(c *gin.Context, err *err_code.ErrorCode, errDetails interface{}) {
 	responseJson(c, err, nil, errDetails)
 }

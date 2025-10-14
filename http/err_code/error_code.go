@@ -1,4 +1,4 @@
-package response
+package err_code
 
 import "net/http"
 
@@ -17,6 +17,8 @@ func (e *ErrorCode) Error() string {
 	return e.Msg
 }
 
+
+// define [3 service][3 module][3 error]
 var (
 	Success = NewErrorCode(0, "success", http.StatusOK)
 

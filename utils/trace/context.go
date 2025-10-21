@@ -16,3 +16,16 @@ func GetRequestIDFromCtx(ctx context.Context) string {
 	}
 	return ""
 }
+
+func SetTraceIDToCtx(ctx context.Context, traceID string) context.Context {
+	return context.WithValue(ctx, ContextKeyTraceID{}, traceID)
+}
+
+func GetTraceIDFromCtx(ctx context.Context) string {
+	if value := ctx.Value(ContextKeyTraceID{}); value != nil {
+		if traceID, ok := value.(string); ok {
+			return traceID
+		}
+	}
+	return ""
+}

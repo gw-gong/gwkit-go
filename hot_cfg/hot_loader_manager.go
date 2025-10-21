@@ -3,6 +3,7 @@ package hot_cfg
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
@@ -21,6 +22,8 @@ func NewHotLoaderManager() HotLoaderManager {
 
 type hotLoaderManager struct {
 	mux        sync.Mutex
+	isWatching int32
+
 	hotLoaders []HotLoader
 }
 
@@ -32,6 +35,11 @@ func (hlm *hotLoaderManager) RegisterHotLoader(hotLoader HotLoader) error {
 
 // After all the registrations are completed, start the watch.
 func (hlm *hotLoaderManager) Watch() error {
+	if atomic.LoadInt32(&hlm.isWatching) == 1 {
+		return fmt.Errorf("already watching, don't call Watch again")
+	}
+	atomic.StoreInt32(&hlm.isWatching, 1)
+
 	var errors []error
 
 	for _, hotLoader := range hlm.hotLoaders {

@@ -20,9 +20,9 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	app := gin.New()
-	middlewares.BindBasicMiddlewares(app, true)
+	middlewares.BindBasicMiddlewares(app, nil)
 
-	app.GET("/", func(c *gin.Context) {
+	app.GET("/test", func(c *gin.Context) {
 		log.Infoc(c.Request.Context(), "处理请求", log.Str("path", c.Request.URL.Path))
 		subProcess(c.Request.Context())
 		gwkit_res.ResponseSuccess(c, "success")
@@ -34,5 +34,5 @@ func main() {
 
 func subProcess(ctx context.Context) {
 	log.Debugc(ctx, "子流程执行中", log.Str("sub_process", "data_processing"))
-	panic("test panic")
+	// panic("test panic")
 }

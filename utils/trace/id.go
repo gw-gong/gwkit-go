@@ -7,3 +7,7 @@ import (
 func GenerateRequestID() string {
 	return gwkit_str.GenerateULID()
 }
+
+func GenerateTraceID() string {
+	return gwkit_str.GenerateULID()
+}

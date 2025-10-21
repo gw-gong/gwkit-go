@@ -10,38 +10,38 @@ import (
 
 // ================================ Logger Functions ================================
 
-func Debug(msg string, fields ...field) {
+func Debug(msg string, fields ...Field) {
 	zap.L().Debug(msg, fields...)
 }
 
-func Info(msg string, fields ...field) {
+func Info(msg string, fields ...Field) {
 	zap.L().Info(msg, fields...)
 }
 
-func Warn(msg string, fields ...field) {
+func Warn(msg string, fields ...Field) {
 	zap.L().Warn(msg, fields...)
 }
 
-func Error(msg string, fields ...field) {
+func Error(msg string, fields ...Field) {
 	zap.L().Error(msg, fields...)
 }
 
-func Debugc(ctx context.Context, msg string, fields ...field) {
+func Debugc(ctx context.Context, msg string, fields ...Field) {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	loggerFromCtx.Debug(msg, fields...)
 }
 
-func Infoc(ctx context.Context, msg string, fields ...field) {
+func Infoc(ctx context.Context, msg string, fields ...Field) {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	loggerFromCtx.Info(msg, fields...)
 }
 
-func Warnc(ctx context.Context, msg string, fields ...field) {
+func Warnc(ctx context.Context, msg string, fields ...Field) {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	loggerFromCtx.Warn(msg, fields...)
 }
 
-func Errorc(ctx context.Context, msg string, fields ...field) {
+func Errorc(ctx context.Context, msg string, fields ...Field) {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	loggerFromCtx.Error(msg, fields...)
 }
@@ -86,7 +86,7 @@ func Errorfc(ctx context.Context, format string, args ...interface{}) {
 
 // ================================ With Fields Functions ================================
 
-func WithFields(ctx context.Context, fields ...field) context.Context {
+func WithFields(ctx context.Context, fields ...Field) context.Context {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	return setLoggerToCtx(ctx, loggerFromCtx.With(fields...))
 }
@@ -94,4 +94,9 @@ func WithFields(ctx context.Context, fields ...field) context.Context {
 func WithFieldRequestID(ctx context.Context, requestID string) context.Context {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	return setLoggerToCtx(ctx, loggerFromCtx.With(Str(trace.LoggerFieldRequestID, requestID)))
+}
+
+func WithFieldTraceID(ctx context.Context, traceID string) context.Context {
+	loggerFromCtx := getLoggerFromCtx(ctx)
+	return setLoggerToCtx(ctx, loggerFromCtx.With(Str(trace.LoggerFieldTraceID, traceID)))
 }

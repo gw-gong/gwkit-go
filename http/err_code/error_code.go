@@ -17,7 +17,7 @@ func (e *ErrorCode) Error() string {
 	return e.Msg
 }
 
-// define [3 service][3 module][3 error]
+// define [1 client/server][2 service][3 module][3 error]
 var (
 	Success = NewErrorCode(0, "success", http.StatusOK)
 
@@ -38,11 +38,11 @@ var (
 	ErrRequestEntityTooLarge = NewErrorCode(100000013, "request entity too large", http.StatusRequestEntityTooLarge)
 
 	// Server Error (5xx)
-	ErrInternal           = NewErrorCode(100000100, "internal server error", http.StatusInternalServerError)
-	ErrDatabase           = NewErrorCode(100000101, "database error", http.StatusInternalServerError)
-	ErrCacheService       = NewErrorCode(100000102, "cache service error", http.StatusInternalServerError)
-	ErrThirdPartyService  = NewErrorCode(100000103, "third-party service error", http.StatusInternalServerError)
-	ErrBadGateway         = NewErrorCode(100000104, "bad gateway", http.StatusBadGateway)
-	ErrServiceUnavailable = NewErrorCode(100000105, "service unavailable", http.StatusServiceUnavailable)
-	ErrGatewayTimeout     = NewErrorCode(100000106, "gateway timeout", http.StatusGatewayTimeout)
+	ErrInternal           = NewErrorCode(200000000, "internal server error", http.StatusInternalServerError)
+	ErrDatabase           = NewErrorCode(200000001, "database error", http.StatusInternalServerError)
+	ErrCacheService       = NewErrorCode(200000002, "cache service error", http.StatusInternalServerError)
+	ErrThirdPartyService  = NewErrorCode(200000003, "third-party service error", http.StatusInternalServerError)
+	ErrBadGateway         = NewErrorCode(200000004, "bad gateway", http.StatusBadGateway)
+	ErrServiceUnavailable = NewErrorCode(200000005, "service unavailable", http.StatusServiceUnavailable)
+	ErrGatewayTimeout     = NewErrorCode(200000006, "gateway timeout", http.StatusGatewayTimeout)
 )

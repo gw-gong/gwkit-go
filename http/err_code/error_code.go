@@ -17,7 +17,6 @@ func (e *ErrorCode) Error() string {
 	return e.Msg
 }
 
-
 // define [3 service][3 module][3 error]
 var (
 	Success = NewErrorCode(0, "success", http.StatusOK)
@@ -46,5 +45,4 @@ var (
 	ErrBadGateway         = NewErrorCode(100000104, "bad gateway", http.StatusBadGateway)
 	ErrServiceUnavailable = NewErrorCode(100000105, "service unavailable", http.StatusServiceUnavailable)
 	ErrGatewayTimeout     = NewErrorCode(100000106, "gateway timeout", http.StatusGatewayTimeout)
-	ErrUnknown            = NewErrorCode(100000199, "unknown error", http.StatusInternalServerError)
 )

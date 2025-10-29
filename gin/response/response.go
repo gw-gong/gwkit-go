@@ -1,6 +1,8 @@
 package response
 
 import (
+	"net/http"
+
 	"github.com/gw-gong/gwkit-go/http/err_code"
 	"github.com/gw-gong/gwkit-go/log"
 
@@ -16,8 +18,12 @@ type ClientResponse struct {
 
 func responseJson(c *gin.Context, err *err_code.ErrorCode, data interface{}, errDetails interface{}) {
 	if err == nil {
-		err = err_code.ErrUnknown
-		log.Warnc(c.Request.Context(), "error is nil, set to unknown, this is a bug", log.Err(err))
+		err = &err_code.ErrorCode{
+			HttpStatus: http.StatusInternalServerError,
+			Code:       -1,
+			Msg:        "unknown error",
+		}
+		log.Warnc(c.Request.Context(), "error is nil, set to unknown, this is a bug")
 	}
 	c.JSON(err.HttpStatus, ClientResponse{
 		Code:       err.Code,

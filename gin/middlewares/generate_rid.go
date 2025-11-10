@@ -15,12 +15,13 @@ func GenerateRID(c *gin.Context) {
 		requestID = trace.GenerateRequestID()
 	}
 
+	// set request id to context
 	reqCtx := trace.SetRequestIDToCtx(c.Request.Context(), requestID)
-	reqCtx = log.WithFieldRequestID(reqCtx, requestID)
-	c.Request = c.Request.WithContext(reqCtx)
 
-	c.Set(trace.HttpHeaderRequestID, requestID)
-	c.Header(trace.HttpHeaderRequestID, requestID) // response header
+	// set request id to log
+	reqCtx = log.WithFieldRequestID(reqCtx, requestID)
+
+	c.Request = c.Request.WithContext(reqCtx)
 
 	c.Next()
 }

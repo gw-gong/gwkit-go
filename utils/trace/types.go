@@ -9,5 +9,5 @@ const (
 )
 
 const (
-	HttpHeaderRequestID = "X-Request-ID"
+	HttpHeaderRequestID = "X-Request-Id"
 )

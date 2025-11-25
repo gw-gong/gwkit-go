@@ -1,6 +1,7 @@
 package response
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gw-gong/gwkit-go/global_settings"
@@ -28,10 +29,24 @@ func WithErrDetail(errDetail interface{}) Option {
 	}
 }
 
+func WithErrDetailf(format string, a ...interface{}) Option {
+	return func(response *ServerResponse) {
+		response.ErrDetail = fmt.Sprintf(format, a...)
+	}
+}
+
 func WithDebug(debugInfo interface{}) Option {
 	return func(response *ServerResponse) {
 		if global_settings.GetEnv() == global_settings.ENV_TEST {
 			response.DebugInfo = debugInfo
+		}
+	}
+}
+
+func WithDebugf(format string, a ...interface{}) Option {
+	return func(response *ServerResponse) {
+		if global_settings.GetEnv() == global_settings.ENV_TEST {
+			response.DebugInfo = fmt.Sprintf(format, a...)
 		}
 	}
 }

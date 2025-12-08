@@ -1,8 +1,8 @@
 database:
   host: localhost
-  port: 667788
+  port: 6677
   username: admin
   password: secret
 api:
   key: "123456"
-  timeout: 40s
+  timeout: 5

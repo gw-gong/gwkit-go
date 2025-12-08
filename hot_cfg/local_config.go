@@ -4,9 +4,8 @@ type LocalConfig interface {
 	WatchLocalConfig(loadConfig func())
 }
 
-type localConfig struct {
-	enable   bool
-	FilePath string
-	FileName string
-	FileType string
+type LocalConfigOption struct {
+	FilePath string `json:"filePath" yaml:"filePath" mapstructure:"filePath"`
+	FileName string `json:"fileName" yaml:"fileName" mapstructure:"fileName"`
+	FileType string `json:"fileType" yaml:"fileType" mapstructure:"fileType"`
 }

@@ -6,10 +6,9 @@ type ConsulConfig interface {
 	CalculateConsulConfigHash() string
 }
 
-type consulConfig struct {
-	enable     bool
-	ConsulAddr string
-	ConsulKey  string
-	ConfigType string
-	ReloadTime int // second
+type ConsulConfigOption struct {
+	ConsulAddr string `json:"consulAddr" yaml:"consulAddr" mapstructure:"consulAddr"`
+	ConsulKey  string `json:"consulKey" yaml:"consulKey" mapstructure:"consulKey"`
+	ConfigType string `json:"configType" yaml:"configType" mapstructure:"configType"`
+	ReloadTime int    `json:"reloadTime" yaml:"reloadTime" mapstructure:"reloadTime"` // second
 }

@@ -9,35 +9,53 @@ import (
 	_ "github.com/spf13/viper/remote"
 )
 
+type BaseConfigCapable interface {
+	GetBaseConfig() *BaseConfig
+	Unmarshal(v interface{}) error
+	AsLocalConfig() LocalConfig
+	AsConsulConfig() ConsulConfig
+}
+
+type LoadconfigType string
+
+const (
+	ConfigTypeLocal  LoadconfigType = "local"
+	ConfigTypeConsul LoadconfigType = "consul"
+)
+
 type BaseConfig struct {
-	Viper        *viper.Viper
-	mux          sync.Mutex
-	LocalConfig  localConfig
-	ConsulConfig consulConfig
+	Viper              *viper.Viper
+	mux                sync.Mutex
+	ConfigType         LoadconfigType
+	LocalConfigOption  *LocalConfigOption
+	ConsulConfigOption *ConsulConfigOption
+}
+
+func NewLocalBaseConfigCapable(localConfig *LocalConfigOption) (BaseConfigCapable, error) {
+	return newBaseConfig(withLocalConfig(localConfig))
+}
+
+func NewConsulBaseConfigCapable(consulConfig *ConsulConfigOption) (BaseConfigCapable, error) {
+	return newBaseConfig(withConsulConfig(consulConfig))
 }
 
 type option func(*BaseConfig)
 
-func WithLocalConfig(filePath, fileName, fileType string) option {
+func withLocalConfig(localConfig *LocalConfigOption) option {
 	return func(c *BaseConfig) {
-		c.LocalConfig.enable = true
-		c.LocalConfig.FilePath = filePath
-		c.LocalConfig.FileName = fileName
-		c.LocalConfig.FileType = fileType
+		c.ConfigType = ConfigTypeLocal
+		c.LocalConfigOption = localConfig
 	}
 }
 
-func WithConsulConfig(consulAddr, consulKey, configType string, reloadTime int) option {
+func withConsulConfig(consulConfig *ConsulConfigOption) option {
 	return func(c *BaseConfig) {
-		c.ConsulConfig.enable = true
-		c.ConsulConfig.ConsulAddr = consulAddr
-		c.ConsulConfig.ConsulKey = consulKey
-		c.ConsulConfig.ConfigType = configType
-		c.ConsulConfig.ReloadTime = reloadTime
+		c.ConfigType = ConfigTypeConsul
+		c.ConsulConfigOption = consulConfig
 	}
 }
 
-func NewBaseConfig(opts ...option) (*BaseConfig, error) {
+func newBaseConfig(opts ...option) (*BaseConfig, error) {
 	c := &BaseConfig{
 		Viper: viper.New(),
 	}
@@ -46,31 +64,30 @@ func NewBaseConfig(opts ...option) (*BaseConfig, error) {
 		opt(c)
 	}
 
-	if c.LocalConfig.enable && c.ConsulConfig.enable {
-		return nil, fmt.Errorf("localConfig and consulConfig cannot be enabled at the same time")
-	}
-
-	if !c.LocalConfig.enable && !c.ConsulConfig.enable {
-		return nil, fmt.Errorf("localConfig or consulConfig must be enabled")
-	}
-
-	if c.LocalConfig.enable && c.LocalConfig.FilePath != "" && c.LocalConfig.FileName != "" && c.LocalConfig.FileType != "" {
-		c.Viper.SetConfigType(c.LocalConfig.FileType)
-		c.Viper.SetConfigName(c.LocalConfig.FileName)
-		c.Viper.AddConfigPath(c.LocalConfig.FilePath)
+	switch c.ConfigType {
+	case ConfigTypeLocal:
+		if c.LocalConfigOption == nil || c.LocalConfigOption.FilePath == "" || c.LocalConfigOption.FileName == "" || c.LocalConfigOption.FileType == "" {
+			return nil, fmt.Errorf("local config is nil or file path, name, and type are required")
+		}
+		c.Viper.SetConfigType(c.LocalConfigOption.FileType)
+		c.Viper.SetConfigName(c.LocalConfigOption.FileName)
+		c.Viper.AddConfigPath(c.LocalConfigOption.FilePath)
 		if err := c.Viper.ReadInConfig(); err != nil {
 			return nil, err
 		}
-	} else if c.ConsulConfig.enable && c.ConsulConfig.ConsulAddr != "" && c.ConsulConfig.ConsulKey != "" {
-		if err := c.Viper.AddRemoteProvider("consul", c.ConsulConfig.ConsulAddr, c.ConsulConfig.ConsulKey); err != nil {
+	case ConfigTypeConsul:
+		if c.ConsulConfigOption == nil || c.ConsulConfigOption.ConsulAddr == "" || c.ConsulConfigOption.ConsulKey == "" || c.ConsulConfigOption.ConfigType == "" {
+			return nil, fmt.Errorf("consul config is nil or addr, key, and type are required")
+		}
+		if err := c.Viper.AddRemoteProvider("consul", c.ConsulConfigOption.ConsulAddr, c.ConsulConfigOption.ConsulKey); err != nil {
 			return nil, err
 		}
-		c.Viper.SetConfigType(c.ConsulConfig.ConfigType)
+		c.Viper.SetConfigType(c.ConsulConfigOption.ConfigType)
 		if err := c.Viper.ReadRemoteConfig(); err != nil {
 			return nil, err
 		}
-	} else {
-		return nil, fmt.Errorf("localConfig or consulConfig must be enabled, and you need to prepare the relevant parameters")
+	default:
+		return nil, fmt.Errorf("invalid config type: %s", c.ConfigType)
 	}
 
 	return c, nil
@@ -80,15 +97,19 @@ func (c *BaseConfig) GetBaseConfig() *BaseConfig {
 	return c
 }
 
+func (c *BaseConfig) Unmarshal(v interface{}) error {
+	return c.Viper.Unmarshal(v)
+}
+
 func (c *BaseConfig) AsLocalConfig() LocalConfig {
-	if c.LocalConfig.enable {
+	if c.ConfigType == ConfigTypeLocal {
 		return c
 	}
 	return nil
 }
 
 func (c *BaseConfig) WatchLocalConfig(loadConfig func()) {
-	if c.LocalConfig.enable {
+	if c.ConfigType == ConfigTypeLocal {
 		c.Viper.WatchConfig()
 		c.Viper.OnConfigChange(func(e fsnotify.Event) {
 			c.mux.Lock()
@@ -99,20 +120,20 @@ func (c *BaseConfig) WatchLocalConfig(loadConfig func()) {
 }
 
 func (c *BaseConfig) AsConsulConfig() ConsulConfig {
-	if c.ConsulConfig.enable {
+	if c.ConfigType == ConfigTypeConsul {
 		return c
 	}
 	return nil
 }
 
 func (c *BaseConfig) GetConsulReloadTime() int {
-	return c.ConsulConfig.ReloadTime
+	return c.ConsulConfigOption.ReloadTime
 }
 
 func (c *BaseConfig) ReadConsulConfig() error {
 	if err := c.Viper.ReadRemoteConfig(); err != nil {
 		return fmt.Errorf("failed to read remote configuration: %w, consulAddr: %s, consulKey: %s, configType: %s",
-			err, c.ConsulConfig.ConsulAddr, c.ConsulConfig.ConsulKey, c.ConsulConfig.ConfigType)
+			err, c.ConsulConfigOption.ConsulAddr, c.ConsulConfigOption.ConsulKey, c.ConsulConfigOption.ConfigType)
 	}
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gw-gong/gwkit-go/hot_cfg"
 	"github.com/gw-gong/gwkit-go/internal/examples/case003/config"
+
 	// "github.com/gw-gong/gwkit-go/internal/examples/case003/net_config"
 	"github.com/gw-gong/gwkit-go/log"
 	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
@@ -18,37 +19,48 @@ func main() {
 
 	hlm := hot_cfg.NewHotLoaderManager()
 
-	err = config.InitConfig("config", "config-dev.yaml", "yaml")
+	localConfigOption := &hot_cfg.LocalConfigOption{
+		FilePath: "config",
+		FileName: "config-dev.yaml",
+		FileType: "yaml",
+	}
+	localConfig, err := config.NewConfig(localConfigOption)
 	gwkit_common.ExitOnErr(context.Background(), err)
-	err = hlm.RegisterHotLoader(config.Cfg)
+	err = hlm.RegisterHotLoader(localConfig)
 	gwkit_common.ExitOnErr(context.Background(), err)
 
-	// err = net_config.InitNetConfig("127.0.0.1:8500", "config/config-dev.yaml", "yaml", 10)
+	// consulConfigOption := &hot_cfg.ConsulConfigOption{
+	// 	ConsulAddr: "127.0.0.1:8500",
+	// 	ConsulKey:  "config/config-dev.yaml",
+	// 	ConfigType: "yaml",
+	// 	ReloadTime: 10,
+	// }
+	// consulConfig, err := net_config.NewConfig(consulConfigOption)
 	// gwkit_common.ExitOnErr(context.Background(), err)
-	// err = hucm.RegisterHotUpdateConfig(net_config.NetCfg)
+	// err = hlm.RegisterHotLoader(consulConfig)
 	// gwkit_common.ExitOnErr(context.Background(), err)
 
-	hlm.Watch()
+	gwkit_common.ExitOnErr(context.Background(), hlm.Watch())
 
 	// 测试热更新
-	testLocoalConfig()
-	// testNetConfig()
+	testLocoalConfig(localConfig)
+	// testNetConfig(consulConfig)
 	select {}
 }
 
-func testLocoalConfig() {
+func testLocoalConfig(config *config.Config) {
 	go func() {
 		for {
-			log.Info("testLocoalConfig", log.Any("config", config.Cfg))
+			log.Info("testLocoalConfig", log.Any("config", config))
 			time.Sleep(5 * time.Second)
 		}
 	}()
 }
 
-// func testNetConfig() {
+// func testNetConfig(config *net_config.Config) {
 // 	go func() {
 // 		for {
-// 			log.Info("testNetConfig", log.Any("config", net_config.NetCfg))
+// 			log.Info("testNetConfig", log.Any("config", config))
 // 			time.Sleep(5 * time.Second)
 // 		}
 // 	}()

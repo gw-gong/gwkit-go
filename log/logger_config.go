@@ -12,7 +12,6 @@ type LoggerConfig struct {
 	OutputToFile    OutputToFileConfig    `yaml:"output_to_file" json:"output_to_file" mapstructure:"output_to_file"`          // Output to file configuration
 	OutputToConsole OutputToConsoleConfig `yaml:"output_to_console" json:"output_to_console" mapstructure:"output_to_console"` // Output to console configuration
 	AddCaller       bool                  `yaml:"add_caller" json:"add_caller" mapstructure:"add_caller"`                      // Whether to add caller information
-	StackTrace      StackTraceConfig      `yaml:"stack_trace" json:"stack_trace" mapstructure:"stack_trace"`                   // Stack trace configuration
 }
 
 type OutputToFileConfig struct {
@@ -28,11 +27,6 @@ type OutputToFileConfig struct {
 type OutputToConsoleConfig struct {
 	Enable   bool   `yaml:"enable" json:"enable" mapstructure:"enable"`       // Whether to enable output
 	Encoding string `yaml:"encoding" json:"encoding" mapstructure:"encoding"` // Encoding
-}
-
-type StackTraceConfig struct {
-	Enable     bool   `yaml:"enable" json:"enable" mapstructure:"enable"` // Whether to enable stack trace
-	TraceLevel string `yaml:"level" json:"level" mapstructure:"level"`    // Stack trace level
 }
 
 func IsSupportedEncodingType(encoding string) bool {
@@ -56,10 +50,6 @@ func NewDefaultLoggerConfig() *LoggerConfig {
 			Encoding: OutputEncodingConsole,
 		},
 		AddCaller: true,
-		StackTrace: StackTraceConfig{
-			Enable:     false,
-			TraceLevel: LoggerLevelError,
-		},
 	}
 }
 
@@ -108,16 +98,6 @@ func mergeCfgIntoDefault(config *LoggerConfig) *LoggerConfig {
 
 	// Merge caller info config
 	mergedConfig.AddCaller = config.AddCaller
-
-	// Merge stack trace config
-	if config.StackTrace.Enable {
-		mergedConfig.StackTrace = config.StackTrace
-	} else {
-		// Merge level settings even if not enabled
-		if config.StackTrace.TraceLevel != "" {
-			mergedConfig.StackTrace.TraceLevel = config.StackTrace.TraceLevel
-		}
-	}
 
 	return mergedConfig
 }

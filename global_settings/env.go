@@ -1,21 +1,19 @@
 package global_settings
 
+type Env string
+
 const (
-	ENV_DEV  = "dev"
-	ENV_TEST = "test"
-
-	ENV_STAGING = "staging"
-
-	ENV_PROD = "prod"
-	ENV_LIVE = "live"
+	ENV_TEST    Env = "test" // test or dev
+	ENV_STAGING Env = "staging"
+	ENV_LIVE    Env = "live" // live or prod
 )
 
-var globalEnv = ENV_DEV
+var globalEnv = ENV_TEST
 
-func SetEnv(env string) {
+func SetEnv(env Env) {
 	globalEnv = env
 }
 
-func GetEnv() string {
+func GetEnv() Env {
 	return globalEnv
 }

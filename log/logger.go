@@ -108,11 +108,5 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 	// create logger
 	logger := zap.New(core, loggerOptions...)
 
-	// Add stack trace
-	if loggerConfig.StackTrace.Enable {
-		stackLevel := MapLoggerLevel(loggerConfig.StackTrace.TraceLevel)
-		logger = logger.WithOptions(zap.AddStacktrace(stackLevel))
-	}
-
 	return logger, syncGlobalLogger, nil
 }

@@ -126,5 +126,5 @@ serverInterceptors := grpc.ChainUnaryInterceptor(
 ## 依赖
 
 - `google.golang.org/grpc`: gRPC框架
-- `github.com/gw-gong/gwkit-go/utils/common`: 通用工具
+- `github.com/gw-gong/gwkit-go/util/common`: 通用工具
 - `github.com/gw-gong/gwkit-go/log`: 日志模块 

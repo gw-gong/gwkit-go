@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 
-	"github.com/gw-gong/gwkit-go/utils/trace"
+	gwkit_trace "github.com/gw-gong/gwkit-go/util/trace"
 
 	"go.uber.org/zap"
 )
@@ -93,10 +93,10 @@ func WithFields(ctx context.Context, fields ...Field) context.Context {
 
 func WithFieldRequestID(ctx context.Context, requestID string) context.Context {
 	loggerFromCtx := getLoggerFromCtx(ctx)
-	return setLoggerToCtx(ctx, loggerFromCtx.With(Str(trace.LoggerFieldRequestID, requestID)))
+	return setLoggerToCtx(ctx, loggerFromCtx.With(Str(gwkit_trace.LoggerFieldRequestID, requestID)))
 }
 
 func WithFieldTraceID(ctx context.Context, traceID string) context.Context {
 	loggerFromCtx := getLoggerFromCtx(ctx)
-	return setLoggerToCtx(ctx, loggerFromCtx.With(Str(trace.LoggerFieldTraceID, traceID)))
+	return setLoggerToCtx(ctx, loggerFromCtx.With(Str(gwkit_trace.LoggerFieldTraceID, traceID)))
 }

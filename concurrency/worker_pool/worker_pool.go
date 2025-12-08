@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
+	gwkit_common "github.com/gw-gong/gwkit-go/util/common"
 )
 
 const (

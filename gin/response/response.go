@@ -7,7 +7,7 @@ import (
 	"github.com/gw-gong/gwkit-go/global_settings"
 	"github.com/gw-gong/gwkit-go/http/err_code"
 	"github.com/gw-gong/gwkit-go/log"
-	"github.com/gw-gong/gwkit-go/utils/trace"
+	gwkit_trace "github.com/gw-gong/gwkit-go/util/trace"
 
 	"github.com/gin-gonic/gin"
 )
@@ -63,7 +63,7 @@ func responseJson(c *gin.Context, err *err_code.ErrorCode, data interface{}, opt
 	response := &ServerResponse{
 		Code:      err.Code,
 		Msg:       err.Msg,
-		RequestID: trace.GetRequestIDFromCtx(c.Request.Context()),
+		RequestID: gwkit_trace.GetRequestIDFromCtx(c.Request.Context()),
 		Data:      data,
 	}
 	for _, option := range options {

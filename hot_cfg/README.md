@@ -192,7 +192,7 @@ import (
 	"github.com/gw-gong/gwkit-go/internal/examples/case003/config"
 	// "github.com/gw-gong/gwkit-go/internal/examples/case003/net_config"
 	"github.com/gw-gong/gwkit-go/log"
-	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
+	gwkit_common "github.com/gw-gong/gwkit-go/util/common"
 )
 
 func main() {

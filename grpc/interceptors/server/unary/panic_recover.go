@@ -3,7 +3,7 @@ package unary
 import (
 	"context"
 
-	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
+	gwkit_common "github.com/gw-gong/gwkit-go/util/common"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

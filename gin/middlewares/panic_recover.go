@@ -7,7 +7,7 @@ import (
 	gwkit_res "github.com/gw-gong/gwkit-go/gin/response"
 	"github.com/gw-gong/gwkit-go/http/err_code"
 	"github.com/gw-gong/gwkit-go/log"
-	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
+	gwkit_common "github.com/gw-gong/gwkit-go/util/common"
 
 	"github.com/gin-gonic/gin"
 )

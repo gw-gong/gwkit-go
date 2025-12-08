@@ -8,8 +8,8 @@ import (
 	"github.com/gw-gong/gwkit-go/grpc/interceptors/server/unary"
 	pb "github.com/gw-gong/gwkit-go/internal/examples/case002/protobuf"
 	"github.com/gw-gong/gwkit-go/log"
-	gwkit_common "github.com/gw-gong/gwkit-go/utils/common"
-	gwkit_str "github.com/gw-gong/gwkit-go/utils/str"
+	gwkit_common "github.com/gw-gong/gwkit-go/util/common"
+	gwkit_str "github.com/gw-gong/gwkit-go/util/str"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"

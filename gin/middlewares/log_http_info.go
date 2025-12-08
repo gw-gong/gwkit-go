@@ -7,7 +7,7 @@ import (
 
 	"github.com/gw-gong/gwkit-go/gin/response"
 	"github.com/gw-gong/gwkit-go/log"
-	"github.com/gw-gong/gwkit-go/utils/http"
+	"github.com/gw-gong/gwkit-go/util/http"
 
 	"github.com/gin-gonic/gin"
 )

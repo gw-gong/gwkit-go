@@ -1,7 +1,7 @@
 package trace
 
 import (
-	gwkit_str "github.com/gw-gong/gwkit-go/utils/str"
+	gwkit_str "github.com/gw-gong/gwkit-go/util/str"
 )
 
 func GenerateRequestID() string {

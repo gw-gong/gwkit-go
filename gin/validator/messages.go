@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 
@@ -181,15 +182,30 @@ func getFieldName(fieldErr validator.FieldError, structValue reflect.Value) stri
 	return fieldErr.Field()
 }
 
+func extractValidationErrors(err error) validator.ValidationErrors {
+	if validationErrs, ok := err.(validator.ValidationErrors); ok {
+		return validationErrs
+	}
+
+	var validationErrs validator.ValidationErrors
+	if errors.As(err, &validationErrs) {
+		return validationErrs
+	}
+
+	// Fallback: no ValidationErrors found
+	return nil
+}
+
 // FmtValidationErrors formats validation errors to English error messages
 // Supports hierarchical and array field names when struct is provided
+// Automatically unwraps wrapped errors to find ValidationErrors
 func FmtValidationErrors(err error, structData ...interface{}) string {
 	if err == nil {
 		return ""
 	}
 
-	validationErrs, ok := err.(validator.ValidationErrors)
-	if !ok {
+	validationErrs := extractValidationErrors(err)
+	if validationErrs == nil {
 		return err.Error()
 	}
 

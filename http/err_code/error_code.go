@@ -21,13 +21,15 @@ func (e *ErrorCode) Error() string {
 // It is recommended that the server always returns a 200 status code to avoid interference from other factors in the network request chain,
 // such as the gateway returning a 502 status code, which can make error localization difficult.
 var (
-	Success = NewErrorCode(1, "success", http.StatusOK)
+	Success = NewErrorCode(0, "success", http.StatusOK)
+)
 
+var (
 	// Client errors
-	ErrParam            = NewErrorCode(100000000, "param error", http.StatusOK)
-	ErrPermissionDenied = NewErrorCode(100000001, "permission denied", http.StatusOK)
+	// ErrParam            = NewErrorCode(100000000, "param error", http.StatusOK)
+	// ErrPermissionDenied = NewErrorCode(100000001, "permission denied", http.StatusOK)
 
 	// Server Error
 	ErrInternal = NewErrorCode(200000000, "internal server error", http.StatusOK)
-	ErrDatabase = NewErrorCode(200000001, "database error", http.StatusOK)
+	// ErrDatabase = NewErrorCode(200000001, "database error", http.StatusOK)
 )

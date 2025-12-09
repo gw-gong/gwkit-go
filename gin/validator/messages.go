@@ -170,19 +170,7 @@ func getErrorMessage(tag string) string {
 	return "Field '{field}' validation failed (rule: " + tag + ")"
 }
 
-func getFieldName(fieldErr validator.FieldError, structValue reflect.Value) string {
-	if !structValue.IsValid() {
-		return fieldErr.Field()
-	}
-
-	if fieldName := parseFieldPath(fieldErr.Namespace(), structValue); fieldName != "" {
-		return fieldName
-	}
-
-	return fieldErr.Field()
-}
-
-func extractValidationErrors(err error) validator.ValidationErrors {
+func extractValidationErrors(err error) interface{} {
 	if validationErrs, ok := err.(validator.ValidationErrors); ok {
 		return validationErrs
 	}
@@ -192,8 +180,69 @@ func extractValidationErrors(err error) validator.ValidationErrors {
 		return validationErrs
 	}
 
-	// Fallback: no ValidationErrors found
+	if isValidationErrorsType(err) {
+		return err
+	}
+
 	return nil
+}
+
+// isValidationErrorsType checks if err implements ValidationErrors interface
+// This works for both  v9 and v10 versions
+func isValidationErrorsType(err error) bool {
+	errType := reflect.TypeOf(err)
+	if errType == nil {
+		return false
+	}
+
+	if errType.Kind() != reflect.Slice {
+		return false
+	}
+
+	errValue := reflect.ValueOf(err)
+	if errValue.Len() == 0 {
+		return true
+	}
+
+	elem := errValue.Index(0)
+	elemType := elem.Type()
+
+	requiredMethods := []string{"Namespace", "Field", "Tag", "Param"}
+	for _, method := range requiredMethods {
+		if _, hasMethod := elemType.MethodByName(method); !hasMethod {
+			return false
+		}
+	}
+
+	return true
+}
+
+func callFieldErrorMethod(fieldErr reflect.Value, methodName string) string {
+	method := fieldErr.MethodByName(methodName)
+	if !method.IsValid() {
+		return ""
+	}
+
+	results := method.Call(nil)
+	if len(results) == 0 {
+		return ""
+	}
+
+	if results[0].Kind() == reflect.String {
+		return results[0].String()
+	}
+
+	return ""
+}
+
+func getFieldNameFromReflection(field, namespace string, structValue reflect.Value) string {
+	if structValue.IsValid() && namespace != "" {
+		// Attempt to get a friendly name using the full namespace path
+		if fieldName := parseFieldPath(namespace, structValue); fieldName != "" {
+			return fieldName
+		}
+	}
+	return field
 }
 
 // FmtValidationErrors formats validation errors to English error messages
@@ -212,12 +261,21 @@ func FmtValidationErrors(err error, structData ...interface{}) string {
 	structValue := getValidStructValue(structData...)
 	var messages []string
 
-	for _, fieldErr := range validationErrs {
-		message := getErrorMessage(fieldErr.Tag())
-		fieldName := getFieldName(fieldErr, structValue)
+	errValue := reflect.ValueOf(validationErrs)
+	for i := 0; i < errValue.Len(); i++ {
+		fieldErr := errValue.Index(i)
+
+		tag := callFieldErrorMethod(fieldErr, "Tag")
+		field := callFieldErrorMethod(fieldErr, "Field")
+		namespace := callFieldErrorMethod(fieldErr, "Namespace")
+		param := callFieldErrorMethod(fieldErr, "Param")
+
+		message := getErrorMessage(tag)
+
+		fieldName := getFieldNameFromReflection(field, namespace, structValue)
 
 		message = strings.ReplaceAll(message, "{field}", fieldName)
-		message = strings.ReplaceAll(message, "{param}", fieldErr.Param())
+		message = strings.ReplaceAll(message, "{param}", param)
 
 		messages = append(messages, message)
 	}

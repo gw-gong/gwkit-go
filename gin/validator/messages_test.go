@@ -2,6 +2,7 @@ package validator
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -28,12 +29,12 @@ func TestValidationMessages(t *testing.T) {
 	validate := binding.Validator.Engine().(*validator.Validate)
 
 	testStruct := TestData{
-		Name:  "",        // required
-		Email: "invalid", // email
-		Age:   16,        // min
+		Name:  "",
+		Email: "invalid",
+		Age:   16,
 		Profile: &TestProfile{
-			NickName: "",        // required (nested)
-			Avatar:   "invalid", // url (nested)
+			NickName: "",
+			Avatar:   "invalid",
 		},
 	}
 
@@ -158,4 +159,67 @@ func getValidationError() error {
 		Name string `binding:"required"`
 	}
 	return validate.Struct(SimpleStruct{})
+}
+
+type MockV9FieldError struct {
+	namespace string
+	field     string
+	tag       string
+	param     string
+}
+
+func (m MockV9FieldError) Namespace() string { return m.namespace }
+func (m MockV9FieldError) Field() string     { return m.field }
+func (m MockV9FieldError) Tag() string       { return m.tag }
+func (m MockV9FieldError) Param() string     { return m.param }
+func (m MockV9FieldError) Error() string {
+	return fmt.Sprintf("Key: '%s' Error:Field validation for '%s' failed on the '%s' tag",
+		m.namespace, m.field, m.tag)
+}
+
+type MockV9ValidationErrors []MockV9FieldError
+
+func (m MockV9ValidationErrors) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "\n")
+}
+
+func TestValidatorV9Compatibility(t *testing.T) {
+
+	v9Errors := MockV9ValidationErrors{
+		{
+			namespace: "GetMessageLinksRequest.Option.ChatType",
+			field:     "ChatType",
+			tag:       "oneof",
+			param:     "private group",
+		},
+		{
+			namespace: "GetMessageLinksRequest.UserID",
+			field:     "UserID",
+			tag:       "required",
+			param:     "",
+		},
+	}
+
+	t.Logf("=== Validator v9 兼容性测试 ===")
+	t.Logf("模拟的 v9 错误: %s", v9Errors.Error())
+
+	result := FmtValidationErrors(v9Errors)
+	t.Logf("FmtValidationErrors 结果: %s", result)
+
+	expectedParts := []string{"must be one of: private group", "is required"}
+	for _, part := range expectedParts {
+		if !strings.Contains(result, part) {
+			t.Errorf("结果应该包含 '%s'，实际结果: %s", part, result)
+		}
+	}
+
+	if strings.Contains(result, "Key:") || strings.Contains(result, "Error:Field validation") {
+		t.Errorf("不应该包含原始错误格式，实际结果: %s", result)
+	} else {
+		t.Logf("✅ 成功处理 validator v9 错误格式")
+	}
 }

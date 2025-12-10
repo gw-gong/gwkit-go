@@ -1,7 +1,9 @@
 package validator
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -170,6 +172,130 @@ func getErrorMessage(tag string) string {
 	return "Field '{field}' validation failed (rule: " + tag + ")"
 }
 
+func extractJSONTypeError(err error, structValue reflect.Value) string {
+	var jsonTypeErr *json.UnmarshalTypeError
+	if !errors.As(err, &jsonTypeErr) {
+		return ""
+	}
+
+	fieldPath := formatJSONFieldPath(jsonTypeErr.Field, structValue)
+	if fieldPath == "" {
+		fieldPath = jsonTypeErr.Field
+	}
+
+	expectedType := formatTypeName(jsonTypeErr.Type)
+	receivedType := formatValueType(jsonTypeErr.Value)
+
+	return fmt.Sprintf("Field '%s' expects %s type, but received %s",
+		fieldPath, expectedType, receivedType)
+}
+
+func formatJSONFieldPath(jsonField string, structValue reflect.Value) string {
+	if jsonField == "" || !structValue.IsValid() {
+		return ""
+	}
+
+	parts := strings.Split(jsonField, ".")
+	if len(parts) == 0 {
+		return ""
+	}
+
+	currentType := unwrapType(structValue.Type())
+	var result []string
+
+	for _, part := range parts {
+		if currentType.Kind() != reflect.Struct {
+			break
+		}
+
+		field := findFieldByJSONTag(currentType, part)
+		if field == nil {
+			if f, found := currentType.FieldByName(strings.Title(part)); found {
+				field = &f
+			} else {
+				result = append(result, part)
+				break
+			}
+		}
+
+		if field != nil {
+			result = append(result, extractFieldLabel(*field))
+			currentType = unwrapType(field.Type)
+		}
+	}
+
+	if len(result) > 0 {
+		return strings.Join(result, ".")
+	}
+	return jsonField
+}
+
+func findFieldByJSONTag(structType reflect.Type, jsonTag string) *reflect.StructField {
+	for i := 0; i < structType.NumField(); i++ {
+		field := structType.Field(i)
+		if getTagValue(field.Tag.Get("json")) == jsonTag {
+			return &field
+		}
+	}
+	return nil
+}
+
+func formatTypeName(t reflect.Type) string {
+	if t == nil {
+		return "unknown"
+	}
+
+	switch t.Kind() {
+	case reflect.String:
+		return "string"
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return "integer"
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return "unsigned integer"
+	case reflect.Float32, reflect.Float64:
+		return "number"
+	case reflect.Bool:
+		return "boolean"
+	case reflect.Slice:
+		elemType := formatTypeName(t.Elem())
+		return fmt.Sprintf("array of %s", elemType)
+	case reflect.Map:
+		keyType := formatTypeName(t.Key())
+		valueType := formatTypeName(t.Elem())
+		return fmt.Sprintf("object with %s keys and %s values", keyType, valueType)
+	case reflect.Ptr:
+		return formatTypeName(t.Elem())
+	case reflect.Struct:
+		return "object"
+	default:
+		return t.String()
+	}
+}
+
+func formatValueType(value string) string {
+	if value == "" {
+		return "empty value"
+	}
+
+	if value == "null" {
+		return "null"
+	}
+	if value == "true" || value == "false" {
+		return "boolean"
+	}
+	if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
+		return "string"
+	}
+	if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
+		return "array"
+	}
+	if strings.HasPrefix(value, "{") && strings.HasSuffix(value, "}") {
+		return "object"
+	}
+
+	return fmt.Sprintf("'%s'", value)
+}
+
 func extractValidationErrors(err error) interface{} {
 	if validationErrs, ok := err.(validator.ValidationErrors); ok {
 		return validationErrs
@@ -245,12 +371,18 @@ func getFieldNameFromReflection(field, namespace string, structValue reflect.Val
 	return field
 }
 
-// FmtValidationErrors formats validation errors to English error messages
+// FmtValidationErrors formats validation errors and JSON type errors to friendly error messages
 // Supports hierarchical and array field names when struct is provided
-// Automatically unwraps wrapped errors to find ValidationErrors
+// Handles both validator.ValidationErrors and json.UnmarshalTypeError
 func FmtValidationErrors(err error, structData ...interface{}) string {
 	if err == nil {
 		return ""
+	}
+
+	structValue := getValidStructValue(structData...)
+
+	if jsonErrMsg := extractJSONTypeError(err, structValue); jsonErrMsg != "" {
+		return jsonErrMsg
 	}
 
 	validationErrs := extractValidationErrors(err)
@@ -258,9 +390,7 @@ func FmtValidationErrors(err error, structData ...interface{}) string {
 		return err.Error()
 	}
 
-	structValue := getValidStructValue(structData...)
 	var messages []string
-
 	errValue := reflect.ValueOf(validationErrs)
 	for i := 0; i < errValue.Len(); i++ {
 		fieldErr := errValue.Index(i)

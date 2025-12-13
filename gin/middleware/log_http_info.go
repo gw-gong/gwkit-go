@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gw-gong/gwkit-go/gin/res"
+	"github.com/gw-gong/gwkit-go/http/util"
 	"github.com/gw-gong/gwkit-go/log"
-	"github.com/gw-gong/gwkit-go/util/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,7 +25,7 @@ func LogHttpReqInfo(options LogHttpInfoOptions) gin.HandlerFunc {
 		// Read request body
 		requestBodyStr := "hidden"
 		if options.LogReqBody && c.Request.Body != nil {
-			body, err := http.ReadAndRestoreReqBody(c.Request)
+			body, err := util.ReadAndRestoreReqBody(c.Request)
 			if err != nil {
 				requestBodyStr = "failed to read request body"
 			} else {

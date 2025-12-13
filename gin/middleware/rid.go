@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GenerateRID(c *gin.Context) {
+func SetRID(c *gin.Context) {
 	var requestID string
 	if val := c.GetHeader(trace.HttpHeaderRequestID); val != "" {
 		requestID = val

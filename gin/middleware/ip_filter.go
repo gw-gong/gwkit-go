@@ -43,29 +43,29 @@ const (
 
 type IPFilterConfig struct {
 	// filter mode
-	Mode IPFilterMode `json:"mode" yaml:"mode"`
+	Mode IPFilterMode `json:"mode" yaml:"mode" mapstructure:"mode"`
 
 	// whitelist ips
-	WhitelistIPs []string `json:"whitelist_ips" yaml:"whitelist_ips"`
+	WhitelistIPs []string `json:"whitelist_ips" yaml:"whitelist_ips" mapstructure:"whitelist_ips"`
 	// whitelist cidrs
-	WhitelistCIDRs []string `json:"whitelist_cidrs" yaml:"whitelist_cidrs"`
+	WhitelistCIDRs []string `json:"whitelist_cidrs" yaml:"whitelist_cidrs" mapstructure:"whitelist_cidrs"`
 
 	// blacklist ips
-	BlacklistIPs []string `json:"blacklist_ips" yaml:"blacklist_ips"`
+	BlacklistIPs []string `json:"blacklist_ips" yaml:"blacklist_ips" mapstructure:"blacklist_ips"`
 	// blacklist cidrs
-	BlacklistCIDRs []string `json:"blacklist_cidrs" yaml:"blacklist_cidrs"`
+	BlacklistCIDRs []string `json:"blacklist_cidrs" yaml:"blacklist_cidrs" mapstructure:"blacklist_cidrs"`
 
 	// ip sources, the order of the sources is the priority of the ip
 	// default: X-Forwarded-For > X-Real-IP > X-Remote-Addr > RemoteAddr
-	IPSources []IPSource `json:"ip_sources" yaml:"ip_sources"`
+	IPSources []IPSource `json:"ip_sources" yaml:"ip_sources" mapstructure:"ip_sources"`
 
 	// deny status code, default 403
-	DenyStatusCode int `json:"deny_status_code" yaml:"deny_status_code"`
+	DenyStatusCode int `json:"deny_status_code" yaml:"deny_status_code" mapstructure:"deny_status_code"`
 	// deny message
-	DenyMessage string `json:"deny_message" yaml:"deny_message"`
+	DenyMessage string `json:"deny_message" yaml:"deny_message" mapstructure:"deny_message"`
 
 	// invalid IP action: how to handle invalid/empty IP addresses, default deny invalid IP
-	InvalidIPAction InvalidIPAction `json:"invalid_ip_action" yaml:"invalid_ip_action"`
+	InvalidIPAction InvalidIPAction `json:"invalid_ip_action" yaml:"invalid_ip_action" mapstructure:"invalid_ip_action"`
 }
 
 type IPInfo struct {

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gw-gong/gwkit-go/log"
-	gwkit_trace "github.com/gw-gong/gwkit-go/util/trace"
+	"github.com/gw-gong/gwkit-go/util/trace"
 )
 
 type BaseHTTPClient struct {
@@ -131,9 +131,9 @@ func (c *BaseHTTPClient) DoRequest(ctx context.Context, method, url string, reqB
 		req.Header.Add(headerItem.Key, headerItem.Value)
 	}
 
-	requestID := gwkit_trace.GetRequestIDFromCtx(ctx)
+	requestID := trace.GetRequestIDFromCtx(ctx)
 	if requestID != "" {
-		req.Header.Add(gwkit_trace.HttpHeaderRequestID, requestID)
+		req.Header.Add(trace.HttpHeaderRequestID, requestID)
 	}
 	req.Header.Add("Content-Type", "application/json")
 

@@ -3,7 +3,7 @@ package unary
 import (
 	"context"
 
-	gwkit_trace "github.com/gw-gong/gwkit-go/util/trace"
+	"github.com/gw-gong/gwkit-go/util/trace"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -11,7 +11,7 @@ import (
 
 func InjectMetaFromCtx() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		requestID := gwkit_trace.GetRequestIDFromCtx(ctx)
+		requestID := trace.GetRequestIDFromCtx(ctx)
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if ok {
 			md = setMetaDataRequestID(md, requestID)
@@ -26,7 +26,7 @@ func InjectMetaFromCtx() grpc.UnaryClientInterceptor {
 
 func setMetaDataRequestID(md metadata.MD, requestID string) metadata.MD {
 	if requestID != "" {
-		md.Set(gwkit_trace.LoggerFieldRequestID, requestID)
+		md.Set(trace.LoggerFieldRequestID, requestID)
 	}
 	return md
 }

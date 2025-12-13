@@ -1,0 +1,32 @@
+package ants
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/gw-gong/gwkit-go/log"
+)
+
+/*
+
+Implement the Logger interface of github.com/panjf2000/ants/v2
+
+type Logger interface {
+	// Printf must have the same semantics as log.Printf.
+	Printf(format string, args ...any)
+}
+
+*/
+
+type SugarLogger struct {
+	Ctx context.Context
+}
+
+func (l *SugarLogger) Printf(format string, args ...interface{}) {
+	format = fmt.Sprintf("[ants] %s", format)
+	if l == nil || l.Ctx == nil {
+		log.Infof(format, args...)
+		return
+	}
+	log.Infofc(l.Ctx, format, args...)
+}

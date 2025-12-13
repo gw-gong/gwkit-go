@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type corsConfig struct {
+type CORSConfig struct {
 	AllowOrigins     []string `json:"allow_origins" yaml:"allow_origins" mapstructure:"allow_origins"`
 	AllowMethods     []string `json:"allow_methods" yaml:"allow_methods" mapstructure:"allow_methods"`
 	AllowHeaders     []string `json:"allow_headers" yaml:"allow_headers" mapstructure:"allow_headers"`
@@ -15,9 +15,9 @@ type corsConfig struct {
 	MaxAge           int      `json:"max_age" yaml:"max_age" mapstructure:"max_age"`
 }
 
-func MergeDefaultCorsConfig(config *corsConfig) *corsConfig {
+func MergeDefaultCORSConfig(config *CORSConfig) *CORSConfig {
 	// default config
-	defaultConfig := corsConfig{
+	defaultConfig := CORSConfig{
 		AllowOrigins:     []string{},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -42,8 +42,8 @@ func MergeDefaultCorsConfig(config *corsConfig) *corsConfig {
 	return config
 }
 
-func Cors(config *corsConfig) gin.HandlerFunc {
-	config = MergeDefaultCorsConfig(config)
+func CORS(config *CORSConfig) gin.HandlerFunc {
+	config = MergeDefaultCORSConfig(config)
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = config.AllowOrigins

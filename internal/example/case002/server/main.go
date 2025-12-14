@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/gw-gong/gwkit-go/grpc/interceptors/server/unary"
+	"github.com/gw-gong/gwkit-go/grpc/interceptor/server/unary"
 	"github.com/gw-gong/gwkit-go/internal/example/case002/protobuf"
 	"github.com/gw-gong/gwkit-go/log"
 	"github.com/gw-gong/gwkit-go/util/common"

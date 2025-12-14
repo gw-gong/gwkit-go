@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/gw-gong/gwkit-go/grpc/interceptors/client/unary"
+	"github.com/gw-gong/gwkit-go/grpc/interceptor/client/unary"
 	"github.com/gw-gong/gwkit-go/log"
 	"github.com/gw-gong/gwkit-go/util/common"
 	"github.com/gw-gong/gwkit-go/util/str"

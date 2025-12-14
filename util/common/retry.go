@@ -14,7 +14,7 @@ const (
 // WithRetry is a function that retries a function until it returns false or the context is canceled.
 // maxTries is the maximum number of tries, interval is the interval between tries.
 // allTries is the number of tries, allErrs is the "returned error" of all tries, lastErr is the error of the last try.
-func WithRetry(ctx context.Context, f func() (shouldRetry bool, err error), maxTries int, interval time.Duration) (
+func WithRetry(ctx context.Context, operationName string, f func() (shouldRetry bool, err error), maxTries int, interval time.Duration) (
 	allTries int, allErrs []error, lastErr error) {
 	if maxTries <= 0 {
 		maxTries = 1
@@ -28,7 +28,7 @@ func WithRetry(ctx context.Context, f func() (shouldRetry bool, err error), maxT
 		shouldRetry, err := f()
 		lastErr = err
 		if err != nil {
-			allErrs = append(allErrs, fmt.Errorf("try %d: %w", i+1, lastErr))
+			allErrs = append(allErrs, fmt.Errorf("%s try %d: %w", operationName, i+1, lastErr))
 		}
 		if !shouldRetry {
 			return i + 1, allErrs, lastErr
@@ -42,7 +42,7 @@ func WithRetry(ctx context.Context, f func() (shouldRetry bool, err error), maxT
 
 		select {
 		case <-ctx.Done():
-			lastErr = fmt.Errorf("try %d: context canceled: %w", i+1, ctx.Err())
+			lastErr = fmt.Errorf("%s try %d: context canceled: %w", operationName, i+1, ctx.Err())
 			allErrs = append(allErrs, lastErr)
 			return i + 1, allErrs, lastErr
 		default:

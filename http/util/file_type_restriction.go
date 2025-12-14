@@ -18,9 +18,9 @@ xxx:
 */
 
 type FileTypeRestriction struct {
-	Enable    bool     `yaml:"enable"`
-	WhiteList []string `yaml:"white_list"`
-	BlackList []string `yaml:"black_list"`
+	Enable    bool     `json:"enable" yaml:"enable" mapstructure:"enable"`
+	WhiteList []string `json:"white_list" yaml:"white_list" mapstructure:"white_list"`
+	BlackList []string `json:"black_list" yaml:"black_list" mapstructure:"black_list"`
 }
 
 // IsFileTypeAllowed Check if the file type is allowed (preferred to use Content-Type in the HTTP header)

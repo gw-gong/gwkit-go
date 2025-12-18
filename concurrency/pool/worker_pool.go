@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gw-gong/gwkit-go/util/common"
+	"github.com/gw-gong/gwkit-go/util"
 )
 
 const (
@@ -67,7 +67,7 @@ func (wp *workerPoolImpl) run(workerPoolSize int) {
 		go func() {
 			defer wp.wg.Done()
 			for work := range wp.workChan {
-				common.WithRecover(work.Do)
+				util.WithRecover(work.Do)
 			}
 		}()
 	}

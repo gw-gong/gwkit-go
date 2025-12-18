@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gw-gong/gwkit-go/util/common"
+	"github.com/gw-gong/gwkit-go/util"
 )
 
 type HotLoaderManager interface {
@@ -46,7 +46,7 @@ func (hlm *hotLoaderManager) Watch() error {
 		if localConfig := hotLoader.AsLocalConfig(); localConfig != nil {
 			localConfig.WatchLocalConfig(hotLoader.LoadConfig)
 		} else if consulConfig := hotLoader.AsConsulConfig(); consulConfig != nil {
-			go common.WithRecover(func() {
+			go util.WithRecover(func() {
 				func(consulConfig ConsulConfig, hotLoader HotLoader) {
 					hlm.watchConsulConfig(consulConfig, hotLoader.LoadConfig)
 				}(consulConfig, hotLoader)

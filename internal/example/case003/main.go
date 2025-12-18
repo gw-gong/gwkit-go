@@ -9,12 +9,12 @@ import (
 
 	// "github.com/gw-gong/gwkit-go/internal/examples/case003/netconfig"
 	"github.com/gw-gong/gwkit-go/log"
-	"github.com/gw-gong/gwkit-go/util/common"
+	"github.com/gw-gong/gwkit-go/util"
 )
 
 func main() {
 	syncFn, err := log.InitGlobalLogger(log.NewDefaultLoggerConfig())
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 	defer syncFn()
 
 	hlm := hotcfg.NewHotLoaderManager()
@@ -25,9 +25,9 @@ func main() {
 		FileType: "yaml",
 	}
 	localConfig, err := config.NewConfig(localConfigOption)
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 	err = hlm.RegisterHotLoader(localConfig)
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 
 	// consulConfigOption := &hotcfg.ConsulConfigOption{
 	// 	ConsulAddr: "127.0.0.1:8500",
@@ -36,11 +36,11 @@ func main() {
 	// 	ReloadTime: 10,
 	// }
 	// consulConfig, err := netconfig.NewConfig(consulConfigOption)
-	// gwkit_common.ExitOnErr(context.Background(), err)
+	// util.ExitOnErr(context.Background(), err)
 	// err = hlm.RegisterHotLoader(consulConfig)
-	// gwkit_common.ExitOnErr(context.Background(), err)
+	// util.ExitOnErr(context.Background(), err)
 
-	common.ExitOnErr(context.Background(), hlm.Watch())
+	util.ExitOnErr(context.Background(), hlm.Watch())
 
 	// test
 	testLocoalConfig(localConfig)

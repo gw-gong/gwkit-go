@@ -8,7 +8,7 @@ import (
 	"github.com/gw-gong/gwkit-go/grpc/interceptor/server/unary"
 	"github.com/gw-gong/gwkit-go/internal/example/case002/protobuf"
 	"github.com/gw-gong/gwkit-go/log"
-	"github.com/gw-gong/gwkit-go/util/common"
+	"github.com/gw-gong/gwkit-go/util"
 	"github.com/gw-gong/gwkit-go/util/str"
 
 	"google.golang.org/grpc"
@@ -18,14 +18,14 @@ import (
 
 func main() {
 	syncFn, err := log.InitGlobalLogger(log.NewDefaultLoggerConfig())
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 	defer syncFn()
 
 	serviceRegistry, err := NewTestServiceRegistry(ServiceName)
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 	serviceID := str.GenerateUUID()
 	err = serviceRegistry.Register(serviceID, ServerPort, []string{ServiceTag})
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 	defer func() {
 		err = serviceRegistry.Deregister(serviceID)
 		if err != nil {
@@ -53,10 +53,10 @@ func main() {
 	protobuf.RegisterTestServiceServer(grpcServer, testService)
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", ServerPort))
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 	defer listener.Close()
 
 	log.Info("服务启动成功", log.Str("port", fmt.Sprintf("%d", ServerPort)))
 	err = grpcServer.Serve(listener)
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 }

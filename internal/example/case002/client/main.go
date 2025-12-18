@@ -5,7 +5,7 @@ import (
 
 	"github.com/gw-gong/gwkit-go/grpc/interceptor/client/unary"
 	"github.com/gw-gong/gwkit-go/log"
-	"github.com/gw-gong/gwkit-go/util/common"
+	"github.com/gw-gong/gwkit-go/util"
 	"github.com/gw-gong/gwkit-go/util/str"
 	"github.com/gw-gong/gwkit-go/util/trace"
 
@@ -14,7 +14,7 @@ import (
 
 func main() {
 	syncFn, err := log.InitGlobalLogger(log.NewDefaultLoggerConfig())
-	common.ExitOnErr(context.Background(), err)
+	util.ExitOnErr(context.Background(), err)
 	defer syncFn()
 
 	requestID := str.GenerateULID()
@@ -26,7 +26,7 @@ func main() {
 			unary.InjectMetaFromCtx(),
 		),
 	)
-	common.ExitOnErr(ctx, err)
+	util.ExitOnErr(ctx, err)
 
 	_, _ = testClient.TestFunc(ctx, "test")
 

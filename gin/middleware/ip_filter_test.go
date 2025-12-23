@@ -24,7 +24,8 @@ func createTestRouter(config *IPFilterConfig) *gin.Engine {
 }
 
 func TestDefaultIPFilterConfig(t *testing.T) {
-	config := DefaultIPFilterConfig()
+	config := newDefaultIPFilterConfig()
+	config.Build()
 
 	if config.Mode != IPFilterModeBlacklist {
 		t.Errorf("Expected mode to be IPFilterModeBlacklist, got %v", config.Mode)
@@ -40,55 +41,6 @@ func TestDefaultIPFilterConfig(t *testing.T) {
 
 	if config.InvalidIPAction != InvalidIPDeny {
 		t.Errorf("Expected invalid IP action to be InvalidIPDeny, got %v", config.InvalidIPAction)
-	}
-}
-
-func TestIsIPInList(t *testing.T) {
-	tests := []struct {
-		clientIP string
-		ipList   []string
-		expected bool
-	}{
-		{"192.168.1.1", []string{"192.168.1.1", "10.0.0.1"}, true},
-		{"192.168.1.2", []string{"192.168.1.1", "10.0.0.1"}, false},
-		{"127.0.0.1", []string{"127.0.0.1"}, true},
-		{"127.0.0.2", []string{"127.0.0.1"}, false},
-		{"192.168.1.1", []string{}, false},
-	}
-
-	for _, test := range tests {
-		result := isIPInList(test.clientIP, test.ipList)
-		if result != test.expected {
-			t.Errorf("isIPInList(%s, %v) = %v, expected %v",
-				test.clientIP, test.ipList, result, test.expected)
-		}
-	}
-}
-
-func TestIsIPInCIDRList(t *testing.T) {
-	tests := []struct {
-		clientIP string
-		cidrList []string
-		expected bool
-	}{
-		{"192.168.1.1", []string{"192.168.1.0/24"}, true},
-		{"192.168.1.255", []string{"192.168.1.0/24"}, true},
-		{"192.168.2.1", []string{"192.168.1.0/24"}, false},
-		{"10.0.0.1", []string{"10.0.0.0/8"}, true},
-		{"172.16.0.1", []string{"10.0.0.0/8"}, false},
-		{"192.168.1.1", []string{"192.168.1.0/24", "10.0.0.0/8"}, true},
-		{"10.1.1.1", []string{"192.168.1.0/24", "10.0.0.0/8"}, true},
-		{"172.16.1.1", []string{"192.168.1.0/24", "10.0.0.0/8"}, false},
-		{"invalid-ip", []string{"192.168.1.0/24"}, false},
-		{"192.168.1.1", []string{"invalid-cidr"}, false},
-	}
-
-	for _, test := range tests {
-		result := isIPInCIDRList(test.clientIP, test.cidrList)
-		if result != test.expected {
-			t.Errorf("isIPInCIDRList(%s, %v) = %v, expected %v",
-				test.clientIP, test.cidrList, result, test.expected)
-		}
 	}
 }
 

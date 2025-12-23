@@ -3,10 +3,11 @@ package middleware
 import (
 	"net"
 	"net/http"
-	"slices"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type IPFilterAction int
@@ -41,39 +42,95 @@ const (
 	IPSourceRemoteAddr                    // RemoteAddr
 )
 
+type IPFilterInternalConfig struct {
+	isBuilt         bool                `json:"-" yaml:"-"`
+	uuid            string              `json:"-" yaml:"-"`
+	whiteListIPMap  map[string]struct{} `json:"-" yaml:"-"`
+	whiteListIPNets []*net.IPNet        `json:"-" yaml:"-"`
+	blackListIPMap  map[string]struct{} `json:"-" yaml:"-"`
+	blackListIPNets []*net.IPNet        `json:"-" yaml:"-"`
+}
+
 type IPFilterConfig struct {
+	IPFilterInternalConfig
+
 	// filter mode
-	Mode IPFilterMode `json:"mode" yaml:"mode" mapstructure:"mode"`
+	Mode IPFilterMode `json:"mode" yaml:"mode"`
 
 	// whitelist ips
-	WhitelistIPs []string `json:"whitelist_ips" yaml:"whitelist_ips" mapstructure:"whitelist_ips"`
+	WhitelistIPs []string `json:"whitelist_ips" yaml:"whitelist_ips"`
 	// whitelist cidrs
-	WhitelistCIDRs []string `json:"whitelist_cidrs" yaml:"whitelist_cidrs" mapstructure:"whitelist_cidrs"`
+	WhitelistCIDRs []string `json:"whitelist_cidrs" yaml:"whitelist_cidrs"`
 
 	// blacklist ips
-	BlacklistIPs []string `json:"blacklist_ips" yaml:"blacklist_ips" mapstructure:"blacklist_ips"`
+	BlacklistIPs []string `json:"blacklist_ips" yaml:"blacklist_ips"`
 	// blacklist cidrs
-	BlacklistCIDRs []string `json:"blacklist_cidrs" yaml:"blacklist_cidrs" mapstructure:"blacklist_cidrs"`
+	BlacklistCIDRs []string `json:"blacklist_cidrs" yaml:"blacklist_cidrs"`
 
 	// ip sources, the order of the sources is the priority of the ip
 	// default: X-Forwarded-For > X-Real-IP > X-Remote-Addr > RemoteAddr
-	IPSources []IPSource `json:"ip_sources" yaml:"ip_sources" mapstructure:"ip_sources"`
+	IPSources []IPSource `json:"ip_sources" yaml:"ip_sources"`
 
 	// deny status code, default 403
-	DenyStatusCode int `json:"deny_status_code" yaml:"deny_status_code" mapstructure:"deny_status_code"`
+	DenyStatusCode int `json:"deny_status_code" yaml:"deny_status_code"`
 	// deny message
-	DenyMessage string `json:"deny_message" yaml:"deny_message" mapstructure:"deny_message"`
+	DenyMessage string `json:"deny_message" yaml:"deny_message"`
 
 	// invalid IP action: how to handle invalid/empty IP addresses, default deny invalid IP
-	InvalidIPAction InvalidIPAction `json:"invalid_ip_action" yaml:"invalid_ip_action" mapstructure:"invalid_ip_action"`
+	InvalidIPAction InvalidIPAction `json:"invalid_ip_action" yaml:"invalid_ip_action"`
 }
 
-type IPInfo struct {
-	IP   string
-	From string
+// Build: Must be called after the config is set
+func (c *IPFilterConfig) Build() {
+	if c == nil {
+		return
+	}
+	c.mergeDefaultIPFilterConfig()
+	c.uuid = uuid.New().String()
+	c.whiteListIPMap = make(map[string]struct{}, len(c.WhitelistIPs))
+	c.whiteListIPNets = make([]*net.IPNet, 0, len(c.WhitelistCIDRs))
+	c.blackListIPMap = make(map[string]struct{}, len(c.BlacklistIPs))
+	c.blackListIPNets = make([]*net.IPNet, 0, len(c.BlacklistCIDRs))
+	for _, ip := range c.WhitelistIPs {
+		c.whiteListIPMap[ip] = struct{}{}
+	}
+	for _, cidr := range c.WhitelistCIDRs {
+		_, ipNet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			continue
+		}
+		c.whiteListIPNets = append(c.whiteListIPNets, ipNet)
+	}
+	for _, ip := range c.BlacklistIPs {
+		c.blackListIPMap[ip] = struct{}{}
+	}
+	for _, cidr := range c.BlacklistCIDRs {
+		_, ipNet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			continue
+		}
+		c.blackListIPNets = append(c.blackListIPNets, ipNet)
+	}
+	c.isBuilt = true
 }
 
-func DefaultIPFilterConfig() *IPFilterConfig {
+func (c *IPFilterConfig) mergeDefaultIPFilterConfig() {
+	if c == nil {
+		return
+	}
+	defaultConfig := newDefaultIPFilterConfig()
+	if c.DenyStatusCode == 0 {
+		c.DenyStatusCode = defaultConfig.DenyStatusCode
+	}
+	if c.DenyMessage == "" {
+		c.DenyMessage = defaultConfig.DenyMessage
+	}
+	if len(c.IPSources) == 0 {
+		c.IPSources = defaultConfig.IPSources
+	}
+}
+
+func newDefaultIPFilterConfig() *IPFilterConfig {
 	return &IPFilterConfig{
 		Mode:            IPFilterModeBlacklist,
 		WhitelistIPs:    []string{},
@@ -87,38 +144,82 @@ func DefaultIPFilterConfig() *IPFilterConfig {
 	}
 }
 
-func MergeDefaultIPFilterConfig(config *IPFilterConfig) *IPFilterConfig {
-	defaultConfig := DefaultIPFilterConfig()
-	if config == nil {
-		return defaultConfig
+func checkConfigShouldUpdate(currentConfig *IPFilterConfig, newConfig *IPFilterConfig) bool {
+	if newConfig == nil || !newConfig.isBuilt {
+		return false
 	}
-	if config.DenyStatusCode == 0 {
-		config.DenyStatusCode = defaultConfig.DenyStatusCode
+	if currentConfig == nil || currentConfig.uuid != newConfig.uuid {
+		return true
 	}
-	if config.DenyMessage == "" {
-		config.DenyMessage = defaultConfig.DenyMessage
-	}
-	if len(config.IPSources) == 0 {
-		config.IPSources = defaultConfig.IPSources
-	}
-	return config
+	return false
 }
 
-func isIPInList(clientIP string, ipList []string) bool {
-	return slices.Contains(ipList, clientIP)
+type configManager struct {
+	mu     *sync.Mutex
+	config *IPFilterConfig
 }
 
-func isIPInCIDRList(clientIP string, cidrList []string) bool {
+func newConfigManager() *configManager {
+	cm := &configManager{
+		mu:     &sync.Mutex{},
+		config: newDefaultIPFilterConfig(),
+	}
+	cm.config.Build()
+	return cm
+}
+
+func (cm *configManager) updateConfigOnChangeFunc(newConfig *IPFilterConfig) {
+	if checkConfigShouldUpdate(cm.config, newConfig) {
+		cm.mu.Lock()
+		defer cm.mu.Unlock()
+		if checkConfigShouldUpdate(cm.config, newConfig) {
+			// Deep copy IPFilterInternalConfig
+			newCfg := &IPFilterConfig{}
+			*newCfg = *newConfig
+			newCfg.WhitelistIPs = make([]string, len(newConfig.WhitelistIPs))
+			copy(newCfg.WhitelistIPs, newConfig.WhitelistIPs)
+			newCfg.WhitelistCIDRs = make([]string, len(newConfig.WhitelistCIDRs))
+			copy(newCfg.WhitelistCIDRs, newConfig.WhitelistCIDRs)
+			newCfg.BlacklistIPs = make([]string, len(newConfig.BlacklistIPs))
+			copy(newCfg.BlacklistIPs, newConfig.BlacklistIPs)
+			newCfg.BlacklistCIDRs = make([]string, len(newConfig.BlacklistCIDRs))
+			copy(newCfg.BlacklistCIDRs, newConfig.BlacklistCIDRs)
+			newCfg.IPSources = make([]IPSource, len(newConfig.IPSources))
+			copy(newCfg.IPSources, newConfig.IPSources)
+			newCfg.whiteListIPMap = make(map[string]struct{}, len(newConfig.WhitelistIPs))
+			for _, ip := range newConfig.WhitelistIPs {
+				newCfg.whiteListIPMap[ip] = struct{}{}
+			}
+			newCfg.whiteListIPNets = make([]*net.IPNet, len(newConfig.whiteListIPNets))
+			copy(newCfg.whiteListIPNets, newConfig.whiteListIPNets)
+			newCfg.blackListIPMap = make(map[string]struct{}, len(newConfig.BlacklistIPs))
+			for _, ip := range newConfig.BlacklistIPs {
+				newCfg.blackListIPMap[ip] = struct{}{}
+			}
+			newCfg.blackListIPNets = make([]*net.IPNet, len(newConfig.blackListIPNets))
+			copy(newCfg.blackListIPNets, newConfig.blackListIPNets)
+			cm.config = newCfg
+		}
+	}
+}
+
+type IPInfo struct {
+	IP   string
+	From string
+}
+
+func isIPInList(clientIP string, ipMap map[string]struct{}) bool {
+	_, ok := ipMap[clientIP]
+	return ok
+}
+
+func isIPInCIDRList(clientIP string, ipNets []*net.IPNet) bool {
 	ip := net.ParseIP(clientIP)
 	if ip == nil {
 		return false
 	}
 
-	for _, cidr := range cidrList {
-		_, ipNet, err := net.ParseCIDR(cidr)
-		if err != nil {
-			continue
-		}
+	for _, ipNet := range ipNets {
 		if ipNet.Contains(ip) {
 			return true
 		}
@@ -140,13 +241,16 @@ func getIPFromSource(c *gin.Context, source IPSource) (string, string) {
 		}
 	case IPSourceXRemoteAddr:
 		if xra := c.GetHeader("X-Remote-Addr"); xra != "" {
-			return xra, "X-Remote-Addr"
+			if ip, _, err := net.SplitHostPort(xra); err == nil {
+				return ip, "X-Remote-Addr"
+			}
 		}
 	case IPSourceRemoteAddr:
-		if ip, _, err := net.SplitHostPort(c.Request.RemoteAddr); err == nil {
-			return ip, "RemoteAddr"
+		if remoteAddr := c.Request.RemoteAddr; remoteAddr != "" {
+			if ip, _, err := net.SplitHostPort(remoteAddr); err == nil {
+				return ip, "RemoteAddr"
+			}
 		}
-		return c.Request.RemoteAddr, "RemoteAddr"
 	}
 	return "", ""
 }
@@ -182,8 +286,8 @@ func checkIPAccess(clientIP string, config *IPFilterConfig) IPFilterAction {
 
 	switch config.Mode {
 	case IPFilterModeWhitelist:
-		if isIPInList(clientIP, config.WhitelistIPs) || isIPInCIDRList(clientIP, config.WhitelistCIDRs) {
-			if isIPInList(clientIP, config.BlacklistIPs) || isIPInCIDRList(clientIP, config.BlacklistCIDRs) {
+		if isIPInList(clientIP, config.whiteListIPMap) || isIPInCIDRList(clientIP, config.whiteListIPNets) {
+			if isIPInList(clientIP, config.blackListIPMap) || isIPInCIDRList(clientIP, config.blackListIPNets) {
 				return IPFilterDeny
 			}
 			return IPFilterAllow
@@ -191,8 +295,8 @@ func checkIPAccess(clientIP string, config *IPFilterConfig) IPFilterAction {
 		return IPFilterDeny
 
 	case IPFilterModeBlacklist:
-		if isIPInList(clientIP, config.BlacklistIPs) || isIPInCIDRList(clientIP, config.BlacklistCIDRs) {
-			if isIPInList(clientIP, config.WhitelistIPs) || isIPInCIDRList(clientIP, config.WhitelistCIDRs) {
+		if isIPInList(clientIP, config.blackListIPMap) || isIPInCIDRList(clientIP, config.blackListIPNets) {
+			if isIPInList(clientIP, config.whiteListIPMap) || isIPInCIDRList(clientIP, config.whiteListIPNets) {
 				return IPFilterAllow
 			}
 			return IPFilterDeny
@@ -208,10 +312,11 @@ func checkIPAccess(clientIP string, config *IPFilterConfig) IPFilterAction {
 // support hot update config
 // support post-process function
 func IPFilter(config *IPFilterConfig, postProcessFuncs ...func(iMetadata *IPInfo, allow bool)) gin.HandlerFunc {
+	cm := newConfigManager()
 	return gin.HandlerFunc(func(c *gin.Context) {
-		currentConfig := MergeDefaultIPFilterConfig(config)
+		cm.updateConfigOnChangeFunc(config)
 
-		clientIPMetadata := getClientIP(c, currentConfig)
+		clientIPMetadata := getClientIP(c, cm.config)
 
 		allow := true
 		defer func() {
@@ -222,12 +327,12 @@ func IPFilter(config *IPFilterConfig, postProcessFuncs ...func(iMetadata *IPInfo
 			}
 		}()
 
-		action := checkIPAccess(clientIPMetadata.IP, currentConfig)
+		action := checkIPAccess(clientIPMetadata.IP, cm.config)
 
 		if action == IPFilterDeny {
 			allow = false
-			c.JSON(currentConfig.DenyStatusCode, gin.H{
-				"error": currentConfig.DenyMessage,
+			c.JSON(cm.config.DenyStatusCode, gin.H{
+				"error": cm.config.DenyMessage,
 			})
 			c.Abort()
 			return

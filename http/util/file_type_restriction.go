@@ -1,21 +1,14 @@
 package util
 
 import (
-	"mime"
-	"path/filepath"
+	"context"
+	"errors"
+	"io"
+	"net/http"
 	"strings"
 
 	"github.com/gw-gong/gwkit-go/log"
 )
-
-/*
-xxx:
-  enable: true
-  white_list:
-    - image/*
-  black_list:
-    - image/svg+xml
-*/
 
 type FileTypeRestriction struct {
 	Enable    bool     `json:"enable" yaml:"enable" mapstructure:"enable"`
@@ -23,31 +16,60 @@ type FileTypeRestriction struct {
 	BlackList []string `json:"black_list" yaml:"black_list" mapstructure:"black_list"`
 }
 
-// IsFileTypeAllowed Check if the file type is allowed (preferred to use Content-Type in the HTTP header)
-func (f *FileTypeRestriction) IsFileTypeAllowed(contentType string, filename string) (isAllowed bool) {
+func (f *FileTypeRestriction) IsFileTypeAllowedWithReader(ctx context.Context, contentType string, reader io.ReadSeeker) (isAllowed bool) {
+	var (
+		detectedContentType string
+		err                 error
+	)
+	defer func() {
+		log.Infoc(ctx, "File type restriction is file type allowed with reader done",
+			log.Str("contentType", contentType),
+			log.Str("detectedContentType", detectedContentType),
+			log.Bool("isAllowed", isAllowed),
+			log.Err(err),
+		)
+	}()
+
+	if !f.isFileTypeAllowed(contentType) {
+		return false
+	}
+
+	if reader == nil {
+		err = errors.New("reader is nil")
+		return false
+	}
+
+	buf := make([]byte, 512)
+	_, err = reader.Read(buf)
+	if err != nil {
+		err = errors.New("failed to read reader")
+		return false
+	}
+	defer func() { // !important
+		if _, err = reader.Seek(0, io.SeekStart); err != nil {
+			err = errors.New("failed to seek reader")
+			isAllowed = false
+		}
+	}()
+	detectedContentType = http.DetectContentType(buf)
+
+	// files with special processing formats
+	if detectedContentType == "application/zip" {
+		detectedContentType = contentType
+	}
+
+	return f.isFileTypeAllowed(detectedContentType)
+}
+
+func (f *FileTypeRestriction) isFileTypeAllowed(contentType string) (isAllowed bool) {
 	if !f.Enable {
 		return true
 	}
 
-	mimeType := contentType
-	if mimeType == "" {
-		ext := strings.ToLower(filepath.Ext(filename))
-		mimeType = mime.TypeByExtension(ext)
-	}
-	defer func() {
-		log.Info("FileTypeRestriction.IsFileTypeAllowed",
-			log.Any("FileTypeRestriction", f),
-			log.Str("contentType", contentType),
-			log.Str("filename", filename),
-			log.Str("mimeType", mimeType),
-			log.Bool("isAllowed", isAllowed),
-		)
-	}()
-
-	if !f.matchWhiteList(mimeType) {
+	if !f.matchWhiteList(contentType) {
 		return false
 	}
-	if f.matchBlackList(mimeType) {
+	if f.matchBlackList(contentType) {
 		return false
 	}
 	return true

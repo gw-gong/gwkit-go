@@ -1,26 +1,79 @@
 package safe
 
-import "errors"
+import (
+	"context"
+	"errors"
+	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/gw-gong/gwkit-go/util"
+)
+
+var ErrLimiterClosed = errors.New("limiter is closed")
 
 type AsyncFuncLimiter struct {
-	semaphore chan struct{}
+	semChan     chan struct{}
+	waitTimeout time.Duration
+	wg          sync.WaitGroup
+	closed      atomic.Bool
 }
 
-func NewAsyncFuncLimiter(maxConcurrent int) *AsyncFuncLimiter {
+func NewAsyncFuncLimiter(maxConcurrent int, waitTimeoutMs int) *AsyncFuncLimiter {
 	return &AsyncFuncLimiter{
-		semaphore: make(chan struct{}, maxConcurrent),
+		semChan:     make(chan struct{}, maxConcurrent),
+		waitTimeout: time.Duration(waitTimeoutMs) * time.Millisecond,
 	}
 }
 
-func (fl *AsyncFuncLimiter) Async(fn func()) error {
+func (afl *AsyncFuncLimiter) Close() {
+	afl.closed.Store(true)
+	afl.wg.Wait()
+}
+
+func (afl *AsyncFuncLimiter) Async(ctx context.Context, fn func()) error {
+	if afl.closed.Load() {
+		return ErrLimiterClosed
+	}
+
 	select {
-	case fl.semaphore <- struct{}{}:
-		go func() {
-			defer func() { <-fl.semaphore }()
-			fn()
-		}()
+	case <-ctx.Done():
+		return ctx.Err()
+	case afl.semChan <- struct{}{}:
+		if afl.closed.Load() {
+			<-afl.semChan
+			return ErrLimiterClosed
+		}
+		afl.executeAsync(fn)
 		return nil
 	default:
-		return errors.New("max concurrent limit exceeded")
+		timeout := time.NewTimer(afl.waitTimeout)
+		defer timeout.Stop()
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-timeout.C:
+			return fmt.Errorf("wait timeout(%v)", afl.waitTimeout)
+		case afl.semChan <- struct{}{}:
+			if afl.closed.Load() {
+				<-afl.semChan
+				return ErrLimiterClosed
+			}
+			afl.executeAsync(fn)
+			return nil
+		}
 	}
+}
+
+func (afl *AsyncFuncLimiter) executeAsync(fn func()) {
+	afl.wg.Add(1)
+	go util.WithRecover(func() {
+		defer func() {
+			<-afl.semChan
+			afl.wg.Done()
+		}()
+		fn()
+	})
 }

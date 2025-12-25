@@ -1,6 +1,6 @@
 package slice
 
-func RemoveDuplicateElem[T comparable](slice []T) []T {
+func RemoveDuplicateElems[T comparable](slice []T) []T {
 	elemSet := make(map[T]struct{})
 	result := make([]T, 0)
 	for _, elem := range slice {

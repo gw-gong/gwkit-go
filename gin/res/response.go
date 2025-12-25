@@ -51,9 +51,9 @@ func WithDebugf(format string, a ...interface{}) Option {
 	}
 }
 
-func responseJson(c *gin.Context, err *code.ErrorCode, data interface{}, options ...Option) {
+func responseJson(c *gin.Context, err *code.ErrCode, data interface{}, options ...Option) {
 	if err == nil {
-		err = &code.ErrorCode{
+		err = &code.ErrCode{
 			HttpStatus: http.StatusInternalServerError,
 			Code:       -1,
 			Msg:        "unknown error",
@@ -78,6 +78,6 @@ func ResponseSuccess(c *gin.Context, data interface{}, options ...Option) {
 }
 
 // ResponseError sends an error response
-func ResponseError(c *gin.Context, err *code.ErrorCode, options ...Option) {
+func ResponseError(c *gin.Context, err *code.ErrCode, options ...Option) {
 	responseJson(c, err, nil, options...)
 }

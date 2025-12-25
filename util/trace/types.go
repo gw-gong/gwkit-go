@@ -10,4 +10,5 @@ const (
 
 const (
 	HttpHeaderRequestID = "X-Request-Id"
+	HttpHeaderTraceID   = "X-Trace-Id"
 )

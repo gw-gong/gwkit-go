@@ -11,137 +11,136 @@ import (
 	"time"
 
 	"github.com/gw-gong/gwkit-go/log"
+	"github.com/gw-gong/gwkit-go/util/str"
 	"github.com/gw-gong/gwkit-go/util/trace"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
-type BaseHTTPClient struct {
-	client *http.Client
-}
+const (
+	defaultKeepAliveMs           = 60000
+	defaultTLSHandshakeTimeoutMs = 3000
 
-// If you don't know how to pass parameters, you can refer to the following content:
-// - timeout: 5
-// - maxIdleConnsPerHost: 10
-// - maxConnsPerHost: 100
+	maxLogReqBodyBytes  = 1024 // 1KB
+	maxLogRespBodyBytes = 1024 // 1KB
+)
+
 type BaseHTTPClientCfg struct {
-	Timeout             int `json:"timeout" yaml:"timeout" mapstructure:"timeout"`
+	TimeoutMs           int `json:"timeout" yaml:"timeout" mapstructure:"timeout"`
 	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost" yaml:"maxIdleConnsPerHost" mapstructure:"maxIdleConnsPerHost"`
 	MaxConnsPerHost     int `json:"maxConnsPerHost" yaml:"maxConnsPerHost" mapstructure:"maxConnsPerHost"`
-
-	// tls config
-	// TODO: add tls config
-
-	// socks5 config
-	// TODO: add socks5 config
 }
 
-func NewHTTPClient(cfg *BaseHTTPClientCfg) *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
-			MaxConnsPerHost:     cfg.MaxConnsPerHost,
-			// TLSClientConfig:     tlsConfig,
-			Dial: (&net.Dialer{
-				Timeout:   time.Duration(cfg.Timeout) * time.Second,
-				KeepAlive: 60 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout:   3 * time.Second,
-			ResponseHeaderTimeout: time.Duration(cfg.Timeout) * time.Second,
+var defaultBaseHTTPClientCfg = &BaseHTTPClientCfg{
+	TimeoutMs:           5000, // request timeout (milliseconds), including connection, reading response, etc.
+	MaxIdleConnsPerHost: 10,   // maximum idle connections per host, for connection reuse
+	MaxConnsPerHost:     100,  // maximum connections per host (including idle and active)
+}
+
+type BaseHTTPClient interface {
+	Close()
+	DoRequest(ctx context.Context, method, url string, reqJsonBody interface{}, headerItems ...HeaderItem) (httpStatus int, isTimeout bool, respBody []byte, err error)
+}
+
+type baseHTTPClient struct {
+	http.Client
+}
+
+func NewBaseHTTPClient(cfg *BaseHTTPClientCfg) BaseHTTPClient {
+	if cfg == nil {
+		cfg = defaultBaseHTTPClientCfg
+	}
+	if cfg.TimeoutMs <= 0 {
+		cfg.TimeoutMs = defaultBaseHTTPClientCfg.TimeoutMs
+	}
+	if cfg.MaxIdleConnsPerHost <= 0 {
+		cfg.MaxIdleConnsPerHost = defaultBaseHTTPClientCfg.MaxIdleConnsPerHost
+	}
+	if cfg.MaxConnsPerHost <= 0 {
+		cfg.MaxConnsPerHost = defaultBaseHTTPClientCfg.MaxConnsPerHost
+	}
+	return &baseHTTPClient{
+		Client: http.Client{
+			Timeout: time.Duration(cfg.TimeoutMs) * time.Millisecond,
+			Transport: &http.Transport{
+				MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
+				MaxConnsPerHost:     cfg.MaxConnsPerHost,
+				// TLSClientConfig:     tlsConfig, // TODO: Support tls config
+				DialContext: (&net.Dialer{
+					Timeout:   time.Duration(cfg.TimeoutMs) * time.Millisecond,
+					KeepAlive: time.Duration(defaultKeepAliveMs) * time.Millisecond,
+				}).DialContext,
+				TLSHandshakeTimeout: time.Duration(defaultTLSHandshakeTimeoutMs) * time.Millisecond,
+			},
 		},
 	}
 }
 
-// TODO: add tls config
-// func NewHTTPClient(timeout time.Duration, maxIdleConnsPerHost, maxConnsPerHost int, tlsConfig *tls.Config) *http.Client {
-// 	return &http.Client{
-// 		Transport: &http.Transport{
-// 			MaxIdleConnsPerHost: maxIdleConnsPerHost,
-// 			MaxConnsPerHost:     maxConnsPerHost,
-// 			TLSClientConfig:     tlsConfig,
-// 			Dial: (&net.Dialer{
-// 				Timeout:   timeout,
-// 				KeepAlive: 60 * time.Second,
-// 			}).Dial,
-// 			TLSHandshakeTimeout:   3 * time.Second,
-// 			ResponseHeaderTimeout: timeout,
-// 		},
-// 	}
-// }
-
-// TODO: add tls and socks5 config
-// func NewHTTPClientWithSOCKS5(timeout time.Duration, maxIdleConnsPerHost, maxConnsPerHost int, tlsConfig *tls.Config, socks5Config *SOCKS5Config) *http.Client {
-// 	var dialer proxy.Dialer
-// 	if socks5Config == nil || socks5Config.Address == "" {
-// 		dialer = &net.Dialer{Timeout: timeout, KeepAlive: 60 * time.Second}
-// 	} else {
-// 		dialer, _ = proxy.SOCKS5(
-// 			"tcp",
-// 			socks5Config.Address,
-// 			&proxy.Auth{
-// 				User:     socks5Config.User,
-// 				Password: socks5Config.Password,
-// 			},
-// 			&net.Dialer{Timeout: timeout, KeepAlive: 60 * time.Second},
-// 		)
-// 	}
-
-// 	return &http.Client{
-// 		Transport: &http.Transport{
-// 			MaxIdleConnsPerHost:   maxIdleConnsPerHost,
-// 			MaxConnsPerHost:       maxConnsPerHost,
-// 			TLSClientConfig:       tlsConfig,
-// 			Dial:                  dialer.Dial,
-// 			TLSHandshakeTimeout:   3 * time.Second,
-// 			ResponseHeaderTimeout: timeout,
-// 		},
-// 	}
-// }
-
-func (c *BaseHTTPClient) Close() {
-	if c.client != nil && c.client.Transport != nil {
-		if transport, ok := c.client.Transport.(*http.Transport); ok {
+func (c *baseHTTPClient) Close() {
+	if c.Transport != nil {
+		if transport, ok := c.Transport.(*http.Transport); ok {
 			transport.CloseIdleConnections()
 		}
 	}
 }
 
-func (c *BaseHTTPClient) DoRequest(ctx context.Context, method, url string, reqBody []byte, headerItems ...HeaderItem) (
+func (c *baseHTTPClient) DoRequest(ctx context.Context, method, url string, reqJsonBody interface{}, headerItems ...HeaderItem) (
 	httpStatus int, isTimeout bool, respBody []byte, err error) {
 	start := time.Now()
+
+	var req *http.Request
 	var resp *http.Response
+	var reqBody []byte
 	defer func() {
-		log.Infoc(ctx, "Do request done",
-			log.Str("method", method),
-			log.Str("url", url),
-			log.Str("req_body", string(reqBody)),
-			log.Int("http_status", httpStatus),
-			log.Bool("is_timeout", isTimeout),
-			log.Str("resp_headers", fmt.Sprintf("%v", resp.Header)),
-			log.Str("resp_body", string(respBody)),
-			log.Duration("duration", time.Since(start)),
-		)
+		var logFields []log.Field
+		logFields = append(logFields, log.Str("method", method))
+		logFields = append(logFields, log.Str("url", url))
+		logFields = append(logFields, log.Int("http_status", httpStatus))
+		logFields = append(logFields, log.Bool("is_timeout", isTimeout))
+		logFields = append(logFields, log.Duration("latency", time.Since(start)))
+		if req != nil {
+			logFields = append(logFields, log.Any("req_headers", req.Header))
+			logFields = append(logFields, log.Str("req_body", str.SubStringByByte(string(reqBody), maxLogReqBodyBytes)))
+		}
+		if resp != nil {
+			logFields = append(logFields, log.Any("resp_headers", resp.Header))
+			logFields = append(logFields, log.Str("resp_body", str.SubStringByByte(string(respBody), maxLogRespBodyBytes)))
+		}
+		log.Infoc(ctx, "Do request done", logFields...)
 	}()
 
-	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(reqBody))
+	if reqJsonBody != nil {
+		reqBody, err = jsoniter.Marshal(reqJsonBody)
+		if err != nil {
+			return HTTPStatusUnknown, false, nil, fmt.Errorf("do request failed to marshal request body, err: %w", err)
+		}
+	}
+
+	var bodyReader io.Reader
+	if len(reqBody) > 0 {
+		bodyReader = bytes.NewBuffer(reqBody)
+	}
+	req, err = http.NewRequestWithContext(ctx, method, url, bodyReader)
 	if err != nil {
-		log.Errorc(ctx, "Do request failed to create request", log.Err(err))
-		return HTTPStatusUnknown, false, nil, fmt.Errorf("Do request failed to create request, err: %v", err)
+		return HTTPStatusUnknown, false, nil, fmt.Errorf("do request failed to create request, err: %w", err)
 	}
 
 	for _, headerItem := range headerItems {
-		req.Header.Add(headerItem.Key, headerItem.Value)
+		req.Header.Set(headerItem.Key, headerItem.Value)
 	}
 
-	requestID := trace.GetRequestIDFromCtx(ctx)
-	if requestID != "" {
-		req.Header.Add(trace.HttpHeaderRequestID, requestID)
+	c.setHeaderTraceInfo(ctx, req.Header)
+	if len(reqBody) > 0 {
+		req.Header.Set("Content-Type", "application/json")
 	}
-	req.Header.Add("Content-Type", "application/json")
 
-	resp, err = c.client.Do(req)
+	resp, err = c.Do(req)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return HTTPStatusUnknown, true, nil, fmt.Errorf("do request timeout (context deadline): %w", err)
+		}
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			log.Errorc(ctx, "Do request timeout", log.Err(err))
-			return HTTPStatusUnknown, true, nil, fmt.Errorf("Do request timeout, err: %v", err)
+			return HTTPStatusUnknown, true, nil, fmt.Errorf("do request timeout (network): %w", err)
 		}
 		return HTTPStatusUnknown, false, nil, err
 	}
@@ -149,15 +148,21 @@ func (c *BaseHTTPClient) DoRequest(ctx context.Context, method, url string, reqB
 
 	respBody, err = io.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorc(ctx, "Do request failed to read response body", log.Int("http_status", resp.StatusCode), log.Err(err))
-		return resp.StatusCode, false, nil, fmt.Errorf("Do request failed to read response body, http_status: %d, err: %v", resp.StatusCode, err)
+		return resp.StatusCode, false, nil, fmt.Errorf("do request failed to read response body, http_status: %d, err: %w", resp.StatusCode, err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		errMsg := fmt.Sprintf("HTTP request failed, status: %d, body: %s", resp.StatusCode, string(respBody))
-		log.Errorc(ctx, "Do request failed", log.Str("err_msg", errMsg))
-		return resp.StatusCode, false, nil, errors.New(errMsg)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp.StatusCode, false, nil, fmt.Errorf("http request failed, status: %d, body: %s", resp.StatusCode, string(respBody))
 	}
 
 	return resp.StatusCode, false, respBody, nil
+}
+
+func (c *baseHTTPClient) setHeaderTraceInfo(ctx context.Context, header http.Header) {
+	if requestID := trace.GetRequestIDFromCtx(ctx); requestID != "" {
+		header.Set(trace.HttpHeaderRequestID, requestID)
+	}
+	if traceID := trace.GetTraceIDFromCtx(ctx); traceID != "" {
+		header.Set(trace.HttpHeaderTraceID, traceID)
+	}
 }

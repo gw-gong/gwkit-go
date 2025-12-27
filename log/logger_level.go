@@ -5,14 +5,16 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+type LoggerLevel string
+
 const (
-	LoggerLevelDebug string = "debug"
-	LoggerLevelInfo  string = "info"
-	LoggerLevelWarn  string = "warn"
-	LoggerLevelError string = "error"
+	LoggerLevelDebug LoggerLevel = "debug"
+	LoggerLevelInfo  LoggerLevel = "info"
+	LoggerLevelWarn  LoggerLevel = "warn"
+	LoggerLevelError LoggerLevel = "error"
 )
 
-func MapLoggerLevel(level string) zapcore.Level {
+func MapLoggerLevel(level LoggerLevel) zapcore.Level {
 	switch level {
 	case LoggerLevelDebug:
 		return zap.DebugLevel

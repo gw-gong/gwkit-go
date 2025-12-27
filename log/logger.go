@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	// Ensure that calling the log package at any time will produce output.
+	// ensure that calling the log package at any time will produce output
 	_, _ = InitGlobalLogger(NewDefaultLoggerConfig())
 }
 
@@ -27,7 +27,7 @@ func InitGlobalLogger(loggerConfig *LoggerConfig) (func(), error) {
 }
 
 func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
-	// Sync global logger
+	// sync global logger
 	var syncGlobalLogger = func() {
 		_ = zap.L().Sync()
 	}
@@ -38,33 +38,33 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 
 	zapCfg.Level.SetLevel(MapLoggerLevel(loggerConfig.Level))
 
-	// Create basic encoder configuration
+	// create basic encoder configuration
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	// Create encoder
+	// create encoder
 	encoder := zapcore.NewJSONEncoder(encoderConfig)
 
-	// Create WriteSyncer
+	// create WriteSyncer
 	var writeSyncer zapcore.WriteSyncer
 	if loggerConfig.OutputToFile.Enable && loggerConfig.OutputToFile.FilePath != "" {
-		// Ensure directory exists
+		// ensure directory exists
 		dir := filepath.Dir(loggerConfig.OutputToFile.FilePath)
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return nil, syncGlobalLogger, fmt.Errorf("failed to create log directory: %w", err)
 		}
 
-		// Use lumberjack to split logs
+		// use lumberjack to split logs
 		lumber := &lumberjack.Logger{
 			Filename:   loggerConfig.OutputToFile.FilePath,
 			MaxSize:    loggerConfig.OutputToFile.MaxSize,    // Unit: MB
 			MaxBackups: loggerConfig.OutputToFile.MaxBackups, // Maximum number of old files to retain
 			MaxAge:     loggerConfig.OutputToFile.MaxAge,     // Maximum number of days to retain old files
-			Compress:   loggerConfig.OutputToFile.Compress,   // Whether to compress after rotation
+			Compress:   loggerConfig.GetCompress(),           // Whether to compress after rotation
 		}
 
-		// Use buffer if enabled
-		if loggerConfig.OutputToFile.WithBuffer {
+		// use buffer if enabled
+		if loggerConfig.GetWithBuffer() {
 			writeSyncer = &zapcore.BufferedWriteSyncer{
 				WS: zapcore.AddSync(lumber),
 			}
@@ -80,7 +80,7 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 				}
 			}
 		}
-	} else if loggerConfig.OutputToConsole.Enable && IsSupportedEncodingType(loggerConfig.OutputToConsole.Encoding) {
+	} else if loggerConfig.OutputToConsole.Enable && IsSupportedEncoding(loggerConfig.OutputToConsole.Encoding) {
 		writeSyncer = zapcore.AddSync(os.Stdout)
 		if loggerConfig.OutputToConsole.Encoding == OutputEncodingConsole {
 			encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -94,15 +94,15 @@ func newLogger(loggerConfig *LoggerConfig) (*zap.Logger, func(), error) {
 		return nil, syncGlobalLogger, errors.New("no valid output configured: either output_to_file or output_to_console must be enabled with valid settings")
 	}
 
-	// Create core
+	// create core
 	core := zapcore.NewCore(encoder, writeSyncer, zapCfg.Level)
 
-	// Create Logger options
+	// create Logger options
 	var loggerOptions []zap.Option
-	if loggerConfig.AddCaller {
+	if loggerConfig.GetAddCaller() {
 		loggerOptions = append(loggerOptions, zap.AddCaller())
 		// add caller skip
-		loggerOptions = append(loggerOptions, zap.AddCallerSkip(1)) // 由于所有的log函数已封装一层，所以需要跳过一层
+		loggerOptions = append(loggerOptions, zap.AddCallerSkip(1)) // due to the log functions are wrapped, so we need to skip one layer
 	}
 
 	// create logger

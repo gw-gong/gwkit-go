@@ -24,11 +24,11 @@ const (
 )
 
 type BaseConfig struct {
-	Viper              *viper.Viper
-	mux                sync.Mutex
-	ConfigType         LoadconfigType
-	LocalConfigOption  *LocalConfigOption
-	ConsulConfigOption *ConsulConfigOption
+	Viper              *viper.Viper        `json:"-" yaml:"-" mapstructure:"-"`
+	mux                sync.Mutex          `json:"-" yaml:"-" mapstructure:"-"`
+	ConfigType         LoadconfigType      `json:"configType" yaml:"configType" mapstructure:"configType"`
+	LocalConfigOption  *LocalConfigOption  `json:"localConfigOption" yaml:"localConfigOption" mapstructure:"localConfigOption"`
+	ConsulConfigOption *ConsulConfigOption `json:"consulConfigOption" yaml:"consulConfigOption" mapstructure:"consulConfigOption"`
 }
 
 func NewLocalBaseConfigCapable(localConfig *LocalConfigOption) (BaseConfigCapable, error) {

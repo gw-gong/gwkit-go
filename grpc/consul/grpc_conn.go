@@ -16,14 +16,14 @@ const (
 	ConsulServiceStatusExists
 )
 
-func NewHealthyGrpcConn(agentAddr, serviceName, tag string, dc string, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
+func NewHealthyGrpcConn(agentAddr, serviceName, tag string, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
 	serviceStatus := CheckServiceExists(agentAddr, serviceName, tag, true)
 	switch serviceStatus {
 	case ConsulServiceStatusUnknown:
 		err = fmt.Errorf("failed to check service %s with tag %s", serviceName, tag)
 		return nil, err
 	case ConsulServiceStatusExists:
-		return newGrpcConn(agentAddr, serviceName, tag, dc, opts...)
+		return newGrpcConn(agentAddr, serviceName, tag, opts...)
 	case ConsulServiceStatusNotExists:
 		err = fmt.Errorf("healthy service %s with tag %s not found", serviceName, tag)
 		return nil, err
@@ -49,16 +49,12 @@ func CheckServiceExists(agentAddr, serviceName, tag string, passingOnly bool) Co
 	return ConsulServiceStatusNotExists
 }
 
-func newGrpcConn(agentAddr, serviceName, tag string, dc string, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
-	target := formatGrpcConnTarget(agentAddr, serviceName, tag, dc)
+func newGrpcConn(agentAddr, serviceName, tag string, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
+	target := formatGrpcConnTarget(agentAddr, serviceName, tag)
 	conn, err = grpc.NewClient(target, opts...)
 	return conn, err
 }
 
-func formatGrpcConnTarget(agentAddr, serviceName, tag string, dc string) string {
-	target := fmt.Sprintf("consul://%s/%s?healthy=true&tag=%s", agentAddr, serviceName, tag)
-	if dc != "" {
-		target += fmt.Sprintf("&dc=%s", dc)
-	}
-	return target
+func formatGrpcConnTarget(agentAddr, serviceName, tag string) string {
+	return fmt.Sprintf("consul://%s/%s?healthy=true&tag=%s", agentAddr, serviceName, tag)
 }

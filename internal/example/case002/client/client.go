@@ -15,17 +15,17 @@ type TestClient interface {
 	TestFunc(ctx context.Context, requestName string) (responseMsg string, err error)
 }
 
-func NewTestClient(agentAddr, serviceName, tag string, dc string, opts ...grpc.DialOption) (TestClient, error) {
+func NewTestClient(agentAddr, serviceName, tag string, opts ...grpc.DialOption) (TestClient, error) {
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials())) // 使用 insecure 连接 (不使用 TLS, 开发环境使用)
-	return newTestClient(agentAddr, serviceName, tag, dc, opts...)
+	return newTestClient(agentAddr, serviceName, tag, opts...)
 }
 
 type testClient struct {
 	client protobuf.TestServiceClient
 }
 
-func newTestClient(agentAddr, serviceName, tag string, dc string, opts ...grpc.DialOption) (TestClient, error) {
-	conn, err := consul.NewHealthyGrpcConn(agentAddr, serviceName, tag, dc, opts...)
+func newTestClient(agentAddr, serviceName, tag string, opts ...grpc.DialOption) (TestClient, error) {
+	conn, err := consul.NewHealthyGrpcConn(agentAddr, serviceName, tag, opts...)
 	if err != nil {
 		return nil, err
 	}

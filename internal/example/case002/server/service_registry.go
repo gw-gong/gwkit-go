@@ -5,7 +5,6 @@ import "github.com/gw-gong/gwkit-go/grpc/consul"
 const (
 	ServiceName = consul.ServiceName("test_service")
 	ServiceTag  = "test"
-	ServiceDC   = ""
 
 	ServerPort = 8081
 )

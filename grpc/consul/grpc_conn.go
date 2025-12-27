@@ -16,16 +16,29 @@ const (
 	ConsulServiceStatusExists
 )
 
-func NewHealthyGrpcConn(agentAddr, serviceName, tag string, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
-	serviceStatus := CheckServiceExists(agentAddr, serviceName, tag, true)
+type HealthyGrpcConnOption struct {
+	AgentAddr   string            `json:"agent_addr" yaml:"agent_addr" mapstructure:"agent_addr"`
+	ServiceName string            `json:"service_name" yaml:"service_name" mapstructure:"service_name"`
+	Tag         string            `json:"tag" yaml:"tag" mapstructure:"tag"`
+	Opts        []grpc.DialOption `json:"-" yaml:"-" mapstructure:"-"`
+}
+
+func NewHealthyGrpcConn(option *HealthyGrpcConnOption) (conn *grpc.ClientConn, err error) {
+	if option == nil {
+		return nil, fmt.Errorf("option is nil")
+	}
+	if option.AgentAddr == "" || option.ServiceName == "" || option.Tag == "" {
+		return nil, fmt.Errorf("agent addr, service name, and tag are required")
+	}
+	serviceStatus := CheckServiceExists(option.AgentAddr, option.ServiceName, option.Tag, true)
 	switch serviceStatus {
 	case ConsulServiceStatusUnknown:
-		err = fmt.Errorf("failed to check service %s with tag %s", serviceName, tag)
+		err = fmt.Errorf("failed to check service %s with tag %s", option.ServiceName, option.Tag)
 		return nil, err
 	case ConsulServiceStatusExists:
-		return newGrpcConn(agentAddr, serviceName, tag, opts...)
+		return newGrpcConn(option.AgentAddr, option.ServiceName, option.Tag, option.Opts...)
 	case ConsulServiceStatusNotExists:
-		err = fmt.Errorf("healthy service %s with tag %s not found", serviceName, tag)
+		err = fmt.Errorf("healthy service %s with tag %s not found", option.ServiceName, option.Tag)
 		return nil, err
 	}
 	return nil, fmt.Errorf("unknown service status: %d", serviceStatus)

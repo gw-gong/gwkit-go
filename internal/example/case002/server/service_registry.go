@@ -6,7 +6,7 @@ const (
 	ServiceName = consul.ServiceName("test_service")
 	ServiceTag  = "test"
 
-	ServerPort = 8081
+	ServerPort = 8080
 )
 
 func NewTestServiceRegistry(sn consul.ServiceName) (consul.ConsulRegistry, error) {

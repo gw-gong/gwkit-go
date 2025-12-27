@@ -88,7 +88,7 @@ func mergeCfgIntoDefault(config *LoggerConfig) *LoggerConfig {
 
 	defaultConfig := NewDefaultLoggerConfig()
 
-	if config.Level != "" {
+	if config.Level == "" {
 		config.Level = defaultConfig.Level
 	}
 
@@ -118,12 +118,12 @@ func mergeCfgIntoDefault(config *LoggerConfig) *LoggerConfig {
 	}
 
 	if config.OutputToConsole.Enable {
-		if config.OutputToConsole.Encoding != "" {
+		if config.OutputToConsole.Encoding == "" {
 			config.OutputToConsole.Encoding = defaultConfig.OutputToConsole.Encoding
 		}
 	}
 
-	if config.AddCaller != nil {
+	if config.AddCaller == nil {
 		config.AddCaller = defaultConfig.AddCaller
 	}
 

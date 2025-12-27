@@ -7,11 +7,11 @@ import (
 	"github.com/gw-gong/gwkit-go/log"
 )
 
-type panicHandler func(err interface{})
+type PanicHandler func(err interface{})
 
 // WithRecover is a function that recovers from a panic and calls the panic handler.
 // !!! Only one panicHandler needs to be passed in; if multiple are provided, only the first one will be used. !!!
-func WithRecover(f func(), panicHandlers ...panicHandler) {
+func WithRecover(f func(), panicHandlers ...PanicHandler) {
 	defer func() {
 		if err := recover(); err != nil {
 			if len(panicHandlers) > 0 && panicHandlers[0] != nil {

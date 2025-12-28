@@ -22,15 +22,13 @@ func main() {
 	ctx := trace.SetRequestIDToCtx(context.Background(), requestID)
 	ctx = log.WithFieldRequestID(ctx, requestID)
 
-	testClient, err := NewTestClient(&consul.HealthyGrpcConnOption{
-		AgentAddr:   "127.0.0.1:8500",
+	consulClient, err := consul.NewConsulClient(consul.DefaultConsulAgentAddr)
+	util.ExitOnErr(ctx, err)
+
+	testClient, err := NewTestClient(consulClient, &consul.HealthyGrpcConnEntry{
 		ServiceName: "test_service",
 		Tag:         "test",
-		Opts: []grpc.DialOption{
-			grpc.WithChainUnaryInterceptor(
-				unary.InjectMetaFromCtx(),
-			),
-		},
+		Opts:        []grpc.DialOption{grpc.WithChainUnaryInterceptor(unary.InjectMetaFromCtx())},
 	})
 	util.ExitOnErr(ctx, err)
 

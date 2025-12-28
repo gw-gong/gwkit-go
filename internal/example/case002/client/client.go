@@ -16,22 +16,19 @@ type TestClient interface {
 	TestFunc(ctx context.Context, requestName string) (responseMsg string, err error)
 }
 
-func NewTestClient(option *consul.HealthyGrpcConnOption) (TestClient, error) {
-	if option == nil {
-		return nil, fmt.Errorf("option is nil")
-	}
-	option.Opts = append(option.Opts, grpc.WithTransportCredentials(insecure.NewCredentials())) // 使用 insecure 连接 (不使用 TLS, 开发环境使用)
-	return newTestClient(option)
-}
-
 type testClient struct {
 	client protobuf.TestServiceClient
 }
 
-func newTestClient(option *consul.HealthyGrpcConnOption) (TestClient, error) {
-	conn, err := consul.NewHealthyGrpcConn(option)
+func NewTestClient(consulClient consul.ConsulClient, entry *consul.HealthyGrpcConnEntry) (TestClient, error) {
+	if entry == nil {
+		return nil, fmt.Errorf("entry is nil")
+	}
+	entry.Opts = append(entry.Opts, grpc.WithTransportCredentials(insecure.NewCredentials())) // intranet env does not use tls
+
+	conn, err := consulClient.GetHealthyGrpcConn(entry)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create grpc connection: %w", err)
 	}
 	return &testClient{client: protobuf.NewTestServiceClient(conn)}, nil
 }

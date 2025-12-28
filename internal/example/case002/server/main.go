@@ -5,15 +5,22 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/gw-gong/gwkit-go/grpc/consul"
 	"github.com/gw-gong/gwkit-go/grpc/interceptor/server/unary"
 	"github.com/gw-gong/gwkit-go/internal/example/case002/protobuf"
 	"github.com/gw-gong/gwkit-go/log"
 	"github.com/gw-gong/gwkit-go/util"
-	"github.com/gw-gong/gwkit-go/util/str"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+)
+
+const (
+	ServiceName = "test_service"
+	ServiceTag  = "test"
+
+	ServerPort = 8080
 )
 
 func main() {
@@ -21,22 +28,26 @@ func main() {
 	util.ExitOnErr(context.Background(), err)
 	defer syncFn()
 
-	serviceRegistry, err := NewTestServiceRegistry(ServiceName)
+	consulClient, err := consul.NewConsulClient(consul.DefaultConsulAgentAddr)
 	util.ExitOnErr(context.Background(), err)
-	serviceID := str.GenerateUUID()
-	err = serviceRegistry.Register(serviceID, ServerPort, []string{ServiceTag})
+
+	registerEntry := &consul.RegisterEntry{
+		ServiceName: ServiceName,
+		Tags:        []string{ServiceTag},
+	}
+	registerEntry.GenerateServiceID()
+	err = consulClient.Register(registerEntry, ServerPort, false)
 	util.ExitOnErr(context.Background(), err)
 	defer func() {
-		err = serviceRegistry.Deregister(serviceID)
+		err = consulClient.Deregister(registerEntry.ServiceID)
 		if err != nil {
-			log.Error("consul 服务注销失败", log.Err(err))
+			log.Error("consul service deregistration failed", log.Err(err))
 		}
-		log.Info("consul 服务注销成功")
+		log.Info("consul service deregistration succeeded")
 	}()
 
-	log.Info("consul 服务注册成功")
+	log.Info("consul service registration succeeded")
 
-	// 创建 gRPC 服务器
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			unary.PanicRecoverInterceptor(),
@@ -44,11 +55,9 @@ func main() {
 		),
 	)
 
-	// 创建并注册健康检查服务
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 
-	// 注册服务
 	testService := NewTestService()
 	protobuf.RegisterTestServiceServer(grpcServer, testService)
 

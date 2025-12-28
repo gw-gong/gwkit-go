@@ -14,14 +14,23 @@ func ParseMetaToCtx() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if ok {
+			var havaTraceInfo bool
 			requestIDs := md.Get(trace.LoggerFieldRequestID)
-			if len(requestIDs) > 0 {
-				requestID := requestIDs[0]
-				if requestID == "" {
-					requestID = trace.GenerateRequestID()
-				}
-				ctx = trace.SetRequestIDToCtx(ctx, requestID)
-				ctx = log.WithFieldRequestID(ctx, requestID)
+			if len(requestIDs) > 0 && requestIDs[0] != "" {
+				ctx = trace.SetRequestIDToCtx(ctx, requestIDs[0])
+				ctx = log.WithFieldRequestID(ctx, requestIDs[0])
+				havaTraceInfo = true
+			}
+			traceIDs := md.Get(trace.LoggerFieldTraceID)
+			if len(traceIDs) > 0 && traceIDs[0] != "" {
+				ctx = trace.SetTraceIDToCtx(ctx, traceIDs[0])
+				ctx = log.WithFieldTraceID(ctx, traceIDs[0])
+				havaTraceInfo = true
+			}
+			if !havaTraceInfo {
+				newRequestID := trace.GenerateRequestID()
+				ctx = trace.SetRequestIDToCtx(ctx, newRequestID)
+				ctx = log.WithFieldRequestID(ctx, newRequestID)
 			}
 		}
 		return handler(ctx, req)

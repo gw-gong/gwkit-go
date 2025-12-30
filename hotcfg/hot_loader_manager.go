@@ -28,7 +28,6 @@ type hotLoaderManager struct {
 }
 
 func (hlm *hotLoaderManager) RegisterHotLoader(hotLoader HotLoader) error {
-	hotLoader.LoadConfig()
 	hlm.hotLoaders = append(hlm.hotLoaders, hotLoader)
 	return nil
 }

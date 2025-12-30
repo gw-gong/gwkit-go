@@ -2,6 +2,8 @@ package trace
 
 import (
 	"context"
+
+	"github.com/gw-gong/gwkit-go/setting"
 )
 
 func SetRequestIDToCtx(ctx context.Context, requestID string) context.Context {
@@ -28,4 +30,15 @@ func GetTraceIDFromCtx(ctx context.Context) string {
 		}
 	}
 	return ""
+}
+
+func CopyCtx(ctx context.Context) context.Context {
+	newCtx := setting.GetServiceContext()
+	if requestID := GetRequestIDFromCtx(ctx); requestID != "" {
+		newCtx = SetRequestIDToCtx(newCtx, requestID)
+	}
+	if traceID := GetTraceIDFromCtx(ctx); traceID != "" {
+		newCtx = SetTraceIDToCtx(newCtx, traceID)
+	}
+	return newCtx
 }

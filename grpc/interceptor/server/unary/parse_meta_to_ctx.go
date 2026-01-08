@@ -3,7 +3,6 @@ package unary
 import (
 	"context"
 
-	"github.com/gw-gong/gwkit-go/log"
 	"github.com/gw-gong/gwkit-go/util/trace"
 
 	"google.golang.org/grpc"
@@ -18,19 +17,19 @@ func ParseMetaToCtx() grpc.UnaryServerInterceptor {
 			requestIDs := md.Get(trace.LoggerFieldRequestID)
 			if len(requestIDs) > 0 && requestIDs[0] != "" {
 				ctx = trace.SetRequestIDToCtx(ctx, requestIDs[0])
-				ctx = log.WithFieldRequestID(ctx, requestIDs[0])
+				ctx = trace.WithLogFieldRequestID(ctx, requestIDs[0])
 				havaTraceInfo = true
 			}
 			traceIDs := md.Get(trace.LoggerFieldTraceID)
 			if len(traceIDs) > 0 && traceIDs[0] != "" {
 				ctx = trace.SetTraceIDToCtx(ctx, traceIDs[0])
-				ctx = log.WithFieldTraceID(ctx, traceIDs[0])
+				ctx = trace.WithLogFieldTraceID(ctx, traceIDs[0])
 				havaTraceInfo = true
 			}
 			if !havaTraceInfo {
 				newRequestID := trace.GenerateRequestID()
 				ctx = trace.SetRequestIDToCtx(ctx, newRequestID)
-				ctx = log.WithFieldRequestID(ctx, newRequestID)
+				ctx = trace.WithLogFieldRequestID(ctx, newRequestID)
 			}
 		}
 		return handler(ctx, req)

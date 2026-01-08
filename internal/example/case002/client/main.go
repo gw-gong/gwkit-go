@@ -20,7 +20,7 @@ func main() {
 
 	requestID := str.GenerateULID()
 	ctx := trace.SetRequestIDToCtx(context.Background(), requestID)
-	ctx = log.WithFieldRequestID(ctx, requestID)
+	ctx = trace.WithLogFieldRequestID(ctx, requestID)
 
 	consulClient, err := consul.NewConsulClient(consul.DefaultConsulAgentAddr)
 	util.ExitOnErr(ctx, err)

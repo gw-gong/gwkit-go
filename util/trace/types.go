@@ -1,7 +1,9 @@
 package trace
 
-type ContextKeyRequestID struct{}
-type ContextKeyTraceID struct{}
+type (
+	ContextKeyRequestID = struct{}
+	ContextKeyTraceID   = struct{}
+)
 
 const (
 	LoggerFieldRequestID = "rid"

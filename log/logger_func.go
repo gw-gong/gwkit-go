@@ -3,8 +3,6 @@ package log
 import (
 	"context"
 
-	"github.com/gw-gong/gwkit-go/util/trace"
-
 	"go.uber.org/zap"
 )
 
@@ -84,19 +82,7 @@ func Errorfc(ctx context.Context, format string, args ...interface{}) {
 	loggerFromCtx.Sugar().Errorf(format, args...)
 }
 
-// ================================ With Fields Functions ================================
-
 func WithFields(ctx context.Context, fields ...Field) context.Context {
 	loggerFromCtx := getLoggerFromCtx(ctx)
 	return setLoggerToCtx(ctx, loggerFromCtx.With(fields...))
-}
-
-func WithFieldRequestID(ctx context.Context, requestID string) context.Context {
-	loggerFromCtx := getLoggerFromCtx(ctx)
-	return setLoggerToCtx(ctx, loggerFromCtx.With(Str(trace.LoggerFieldRequestID, requestID)))
-}
-
-func WithFieldTraceID(ctx context.Context, traceID string) context.Context {
-	loggerFromCtx := getLoggerFromCtx(ctx)
-	return setLoggerToCtx(ctx, loggerFromCtx.With(Str(trace.LoggerFieldTraceID, traceID)))
 }

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"github.com/gw-gong/gwkit-go/log"
 	"github.com/gw-gong/gwkit-go/util/trace"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +18,7 @@ func SetRID(c *gin.Context) {
 	reqCtx := trace.SetRequestIDToCtx(c.Request.Context(), requestID)
 
 	// set request id to log
-	reqCtx = log.WithFieldRequestID(reqCtx, requestID)
+	reqCtx = trace.WithLogFieldRequestID(reqCtx, requestID)
 
 	c.Request = c.Request.WithContext(reqCtx)
 
